@@ -1,244 +1,119 @@
-# CareerFlow AI 🚀
+# 🚀 CareerLens - AI-Powered Career Intelligence Platform
 
-**CareerFlow AI** is an intelligent career readiness portal designed to help students and professionals accelerate their career growth through AI-powered insights.
+CareerLens is a comprehensive, student-centric career acceleration platform designed to help college students and freshers navigate their journey from campus to corporate. It leverages advanced AI (Google Gemini) to provide personalized resume scoring, skill gap analysis, and tailored career roadmaps.
 
-## 🌟 Features
+> **Note:** This project is specifically tailored for the Indian college placement ecosystem (2025-2026 trends), focusing on Campus Placements and Internships.
 
-### 1. **Career Navigator**
-- Generate personalized AI skills roadmaps tailored to your target role
-- Interactive spider chart visualization showing skills demand analysis
-- Track learning progress with estimated completion times
-- Get salary impact projections for each skill
-- Priority-based learning recommendations (Critical, Important, Optional)
+---
 
-### 2. **Resume Scorer**
-- Upload PDF resumes for instant AI analysis
-- Get comprehensive ATS (Applicant Tracking System) compatibility scores
-- Keyword optimization analysis with matched and missing keywords
-- Detailed scoring across 5 categories:
-  - ATS Compatibility
-  - Content Quality
-  - Keyword Optimization
-  - Formatting
-  - Experience Relevance
-- Personalized recommendations for improvement
-- Industry comparison insights
+## ✨ Key Features
+
+### 1. 🔐 Student-Centric Authentication
+*   **Targeted Registration:** Sign-up flow specifically designed for students, capturing:
+    *   College/University Name
+    *   Degree & Major
+    *   Graduation Year
+*   **Secure Auth:** JWT-based session management with Bcrypt password hashing.
+
+### 2. 📄 AI Resume Scorer (ATS & Recruiter View)
+Unlike generic resume parsers, this tool acts as a strict **Campus Placement Recruiter**.
+*   **PDF Analysis:** Parsing and deep analysis of student resumes.
+*   **Placement-Focused Scoring:** Evaluates based on:
+    *   **Project Complexity:** Checks for real-world application vs. simple tutorials.
+    *   **DSA & Coding Profiles:** Looks for LeetCode, CodeChef, GitHub links.
+    *   **Internship Relevance:** Weighs industry experience over academic theory.
+*   **Smart UI Patterns:**
+    *   **"What You'll Learn" Panel:** blurred preview teasing insights to encourage upload.
+    *   **Common Mistakes Tracker:** Identifies typical student errors (e.g., listing subjects instead of skills).
+    *   **Actionable Feedback:** Provides specific missing keywords and formatting fixes.
+
+### 3. 🧭 Career Navigator (AI Roadmap Generator)
+A dynamic roadmap generator for students unsure about their path or looking to upskill.
+*   **Personalized Roadmaps:** Generates a week-by-week learning plan based on:
+    *   **Target Role** (e.g., Full Stack Dev, Data Analyst)
+    *   **Current Skill Level** (Beginner to Advanced)
+*   **Market Intelligence:**
+    *   **Placement Trends 2025-26:** Displays real-time facts about internship conversion rates, top in-demand skills (Cloud, FS), and salary trends.
+    *   **Skill Gap Analysis:** Identifies exactly what technologies the student is missing for their target role.
+
+### 4. 📊 History & Dashboard
+*   **Centralized Repository:** Students can revisit all their past:
+    *   Resume Analysis Reports
+    *   Generated Career Roadmaps
+*   **Management:** Option to delete old or irrelevant analyses.
+*   **Responsive Grid:** Glassmorphism-styled cards for easy navigation.
+
+### 5. 🎨 Premium UI/UX Experience
+*   **Aesthetics:** Dark-themed, futuristic design using **Glassmorphism** and deeply saturated gradients.
+*   **Animations:**
+    *   `Framer Motion` for smooth page transitions and stagger effects.
+    *   **Animated Background:** Custom particle field with floating glowing orbs and grid overlays.
+*   **Responsive Layouts:** Fully responsive grids that adapt from mobile to desktop.
+*   **Sticky Footer:** Polished footer that stays grounded, ensuring a professional look.
+
+---
 
 ## 🛠️ Tech Stack
 
 ### Frontend
-- **React** (Vite) - Fast, modern development experience
-- **Tailwind CSS** - Custom orange & black themed UI
-- **Redux Toolkit** - State management
-- **React Router** - Client-side routing
-- **Recharts** - Interactive data visualizations
-- **Axios** - HTTP client
+*   **Framework:** React.js (Vite)
+*   **Styling:** Tailwind CSS
+*   **State Management:** Redux Toolkit
+*   **Animations:** Framer Motion
+*   **Routing:** React Router DOM
+*   **Icons:** Lucide React
 
 ### Backend
-- **Node.js** - Runtime environment
-- **Express.js** - Web framework
-- **MongoDB** - Database (Mongoose ODM)
-- **Google Gemini AI** - AI-powered analysis
-- **pdf-parse** - Resume parsing
-- **multer** - File upload handling
+*   **Runtime:** Node.js
+*   **Framework:** Express.js
+*   **Database:** MongoDB (Mongoose Schema)
+*   **AI Engine:** Google Gemini Pro API
+*   **Security:** JSON Web Tokens (JWT), Bcrypt.js
+*   **File Handling:** Multer, PDF-Parse
 
-## 📁 Project Structure
-
-```
-CareerFlow/
-├── backend/
-│   ├── config/
-│   │   ├── database.js       # MongoDB connection
-│   │   └── gemini.js         # Gemini AI configuration
-│   ├── controllers/
-│   │   ├── careerController.js   # Career roadmap logic
-│   │   └── resumeController.js   # Resume analysis logic
-│   ├── models/
-│   │   ├── Roadmap.js        # Roadmap schema
-│   │   └── ResumeAnalysis.js # Resume analysis schema
-│   ├── routes/
-│   │   ├── careerRoutes.js   # Career API routes
-│   │   └── resumeRoutes.js   # Resume API routes
-│   ├── .env.example          # Environment variables template
-│   ├── package.json
-│   └── server.js             # Entry point
-│
-└── frontend/
-    ├── src/
-    │   ├── components/
-    │   │   ├── Navbar.jsx
-    │   │   ├── Button.jsx
-    │   │   ├── Card.jsx
-    │   │   ├── Input.jsx
-    │   │   └── Loader.jsx
-    │   ├── pages/
-    │   │   ├── Home.jsx
-    │   │   ├── CareerNavigator.jsx
-    │   │   └── ResumeScorer.jsx
-    │   ├── redux/
-    │   │   ├── store.js
-    │   │   └── slices/
-    │   │       ├── careerSlice.js
-    │   │       └── resumeSlice.js
-    │   ├── App.jsx
-    │   ├── main.jsx
-    │   └── index.css
-    ├── index.html
-    ├── vite.config.js
-    ├── tailwind.config.js
-    └── package.json
-```
+---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js (v18 or higher)
-- MongoDB (local or MongoDB Atlas)
-- Google Gemini API key
+*   Node.js installed
+*   MongoDB URI
+*   Google Gemini API Key
 
 ### Installation
 
-#### 1. Clone the repository
-```bash
-cd CareerLens
-```
+1.  **Clone the repository**
+    ```bash
+    git clone https://github.com/yourusername/careerlens.git
+    cd CareerLens
+    ```
 
-#### 2. Setup Backend
-```bash
-cd backend
-npm install
-```
+2.  **Setup Backend**
+    ```bash
+    cd backend
+    npm install
+    # Create .env file with:
+    # PORT=5000
+    # MONGO_URI=your_mongodb_uri
+    # JWT_SECRET=your_jwt_secret
+    # GEMINI_API_KEY=your_gemini_key
+    npm run dev
+    ```
 
-Create a `.env` file in the backend directory:
-```env
-PORT=5000
-MONGODB_URI=mongodb://localhost:27017/careerflow
-GEMINI_API_KEY=your_gemini_api_key_here
-NODE_ENV=development
-```
-
-**Get your Gemini API key:**
-1. Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Create a new API key
-3. Copy and paste it into your `.env` file
-
-#### 3. Setup Frontend
-```bash
-cd ../frontend
-npm install
-```
-
-### Running the Application
-
-#### Start Backend Server (Terminal 1)
-```bash
-cd backend
-npm run dev
-```
-Backend will run on `http://localhost:5000`
-
-#### Start Frontend Development Server (Terminal 2)
-```bash
-cd frontend
-npm run dev
-```
-Frontend will run on `http://localhost:3000`
-
-## 📡 API Endpoints
-
-### Career Routes
-- `POST /api/career/roadmap` - Generate skills roadmap
-- `GET /api/career/resources/:skillName` - Get learning resources
-- `POST /api/career/path` - Analyze career path
-
-### Resume Routes
-- `POST /api/resume/analyze` - Upload and analyze resume
-- `GET /api/resume/history` - Get analysis history
-
-## 🎨 Design Theme
-
-The application features a clean, professional design with:
-- **White background** for readability
-- **Orange accents** (#FF5722) for CTAs and highlights
-- **Black/Dark gray** (#1E1E1E) for text and secondary elements
-- Modern card-based layout
-- Smooth transitions and hover effects
-
-## 🔑 Key Features Implementation
-
-### AI-Powered Roadmap Generation
-Uses Google Gemini to analyze:
-- Target role requirements
-- Current skills assessment
-- Market demand analysis
-- Learning time estimates
-- Salary impact projections
-
-### Resume Analysis Engine
-Comprehensive scoring across:
-- ATS compatibility (parsing, formatting)
-- Content quality (achievements, metrics)
-- Keyword matching vs job descriptions
-- Experience relevance
-- Professional formatting standards
-
-### Spider Chart Visualization
-Interactive radar chart showing:
-- Current market demand for skills
-- Priority/importance levels
-- Visual skill gap analysis
-
-## 🧪 Testing the Application
-
-### Test Career Navigator
-1. Navigate to "Career Navigator"
-2. Enter target role (e.g., "Full Stack Developer")
-3. Add current skills (e.g., "JavaScript, React, Node.js")
-4. Select experience level
-5. Click "Generate AI Skills Roadmap"
-6. View personalized roadmap with spider chart
-
-### Test Resume Scorer
-1. Navigate to "Resume Scorer"
-2. Enter target role
-3. Upload a PDF resume
-4. Click "Generate AI Skills Data"
-5. Review detailed analysis with scores and recommendations
-
-## 📝 Environment Variables
-
-### Backend (.env)
-```env
-PORT=5000                                      # Server port
-MONGODB_URI=mongodb://localhost:27017/careerflow  # Database connection
-GEMINI_API_KEY=your_api_key_here              # Google Gemini API key
-NODE_ENV=development                          # Environment mode
-```
-
-## 🤝 Contributing
-
-Contributions are welcome! Please follow these steps:
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the ISC License.
-
-## 🙏 Acknowledgments
-
-- Google Gemini AI for intelligent analysis
-- Recharts for data visualization
-- Tailwind CSS for styling
-- React ecosystem for frontend development
-
-## 📧 Support
-
-For issues and questions, please open an issue on GitHub.
+3.  **Setup Frontend**
+    ```bash
+    cd frontend
+    npm install
+    npm run dev
+    ```
 
 ---
 
-**Built with ❤️ for students and professionals advancing their careers**
+## 🔮 Future Roadmap
+*   **Mock Interview Bot:** AI-driven voice interview practice.
+*   **Alumni Connect:** Feature to connect students with placed seniors.
+*   **Code Reviewer:** Direct GitHub repo analysis for project quality.
+
+---
+
+*Built with ❤️ for the Next Gen of Engineers.*
