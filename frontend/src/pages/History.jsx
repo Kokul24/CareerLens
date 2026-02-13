@@ -6,6 +6,8 @@ import AnimatedBackground from '../components/AnimatedBackground';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { ScrollReveal, StaggerContainer, StaggerItem, SkeletonCard } from '../components/UIComponents';
+import ResumeAnalysisResult from '../components/ResumeAnalysisResult';
+import RoadmapResult from '../components/RoadmapResult';
 import { getAllRoadmaps, deleteRoadmap } from '../redux/slices/careerSlice';
 import { getResumeHistory, deleteResume } from '../redux/slices/resumeSlice';
 import {
@@ -18,10 +20,13 @@ import {
   TrendingUp,
   Calendar,
   AlertCircle,
+  X,
+  Maximize2
 } from 'lucide-react';
 
 const History = () => {
   const [tab, setTab] = useState('resumes');
+  const [selectedItem, setSelectedItem] = useState(null);
   const dispatch = useDispatch();
   const { roadmaps, loading: roadmapLoading } = useSelector((state) => state.career);
   const { history, loading: resumeLoading } = useSelector((state) => state.resume);
@@ -31,11 +36,13 @@ const History = () => {
     dispatch(getResumeHistory());
   }, [dispatch]);
 
-  const handleDeleteRoadmap = (id) => {
+  const handleDeleteRoadmap = (e, id) => {
+    e.stopPropagation();
     if (window.confirm('Delete this roadmap?')) dispatch(deleteRoadmap(id));
   };
 
-  const handleDeleteResume = (id) => {
+  const handleDeleteResume = (e, id) => {
+    e.stopPropagation();
     if (window.confirm('Delete this resume analysis?')) dispatch(deleteResume(id));
   };
 
@@ -81,11 +88,10 @@ const History = () => {
                 key={t.key}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setTab(t.key)}
-                className={`relative px-5 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${
-                  tab === t.key
+                className={`relative px-5 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${tab === t.key
                     ? 'text-white'
                     : 'text-slate-400 hover:text-white bg-white/[0.03]'
-                }`}
+                  }`}
               >
                 <t.icon className="w-4 h-4" />
                 {t.label}
@@ -123,17 +129,26 @@ const History = () => {
                   <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" staggerDelay={0.05}>
                     {history.map((item) => (
                       <StaggerItem key={item._id}>
-                        <motion.div whileHover={{ y: -3 }} className="glass-card-hover p-5 group">
-                          <div className="flex items-start justify-between mb-3">
-                            <div>
-                              <h3 className="text-sm font-semibold text-white">{item.targetRole}</h3>
-                              <p className="text-xs text-slate-500 mt-0.5">{item.fileName}</p>
+                        <motion.div
+                          whileHover={{ y: -3 }}
+                          onClick={() => setSelectedItem({ type: 'resume', data: item })}
+                          className="glass-card-hover p-5 group cursor-pointer relative"
+                        >
+                          <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="p-1.5 bg-white/10 rounded-lg">
+                              <Maximize2 className="w-3.5 h-3.5 text-white" />
                             </div>
-                            <div className={`text-2xl font-bold ${
-                              item.overallScore >= 80 ? 'text-green-400' :
-                              item.overallScore >= 60 ? 'text-cyan-400' :
-                              item.overallScore >= 40 ? 'text-amber-400' : 'text-red-400'
-                            }`}>
+                          </div>
+
+                          <div className="flex items-start justify-between mb-3 pr-8">
+                            <div>
+                              <h3 className="text-sm font-semibold text-white line-clamp-1">{item.targetRole}</h3>
+                              <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{item.fileName}</p>
+                            </div>
+                            <div className={`text-2xl font-bold ${item.overallScore >= 80 ? 'text-green-400' :
+                                item.overallScore >= 60 ? 'text-cyan-400' :
+                                  item.overallScore >= 40 ? 'text-amber-400' : 'text-red-400'
+                              }`}>
                               {item.overallScore}
                             </div>
                           </div>
@@ -159,8 +174,8 @@ const History = () => {
                               {formatDate(item.createdAt)}
                             </span>
                             <button
-                              onClick={() => handleDeleteResume(item._id)}
-                              className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition-all"
+                              onClick={(e) => handleDeleteResume(e, item._id)}
+                              className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-500 hover:text-red-400 transition-all z-20"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -192,9 +207,19 @@ const History = () => {
                   <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" staggerDelay={0.05}>
                     {roadmaps.map((item) => (
                       <StaggerItem key={item._id}>
-                        <motion.div whileHover={{ y: -3 }} className="glass-card-hover p-5 group">
-                          <div className="flex items-start justify-between mb-3">
-                            <h3 className="text-sm font-semibold text-white">{item.targetRole}</h3>
+                        <motion.div
+                          whileHover={{ y: -3 }}
+                          onClick={() => setSelectedItem({ type: 'roadmap', data: item })}
+                          className="glass-card-hover p-5 group cursor-pointer relative"
+                        >
+                          <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="p-1.5 bg-white/10 rounded-lg">
+                              <Maximize2 className="w-3.5 h-3.5 text-white" />
+                            </div>
+                          </div>
+
+                          <div className="flex items-start justify-between mb-3 pr-8">
+                            <h3 className="text-sm font-semibold text-white line-clamp-1">{item.targetRole}</h3>
                             <Compass className="w-4 h-4 text-indigo-400" />
                           </div>
 
@@ -207,12 +232,6 @@ const History = () => {
                               <span className="flex items-center gap-1">
                                 <Clock className="w-3 h-3" />
                                 {item.estimatedCompletionTime}
-                              </span>
-                            )}
-                            {item.salaryBoost && (
-                              <span className="flex items-center gap-1 text-green-400">
-                                <TrendingUp className="w-3 h-3" />
-                                {item.salaryBoost}
                               </span>
                             )}
                           </div>
@@ -237,8 +256,8 @@ const History = () => {
                               {formatDate(item.createdAt)}
                             </span>
                             <button
-                              onClick={() => handleDeleteRoadmap(item._id)}
-                              className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition-all"
+                              onClick={(e) => handleDeleteRoadmap(e, item._id)}
+                              className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-500 hover:text-red-400 transition-all z-20"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -261,6 +280,56 @@ const History = () => {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Details Modal */}
+      <AnimatePresence>
+        {selectedItem && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedItem(null)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-5xl max-h-[90vh] overflow-y-auto glass-card border border-white/10 shadow-2xl rounded-2xl bg-[#0f172a] outline-none"
+            >
+              {/* Modal Header */}
+              <div className="sticky top-0 z-10 px-6 py-4 border-b border-white/10 bg-[#0f172a]/90 backdrop-blur-md flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-white">
+                    {selectedItem.data.targetRole}
+                  </h2>
+                  <p className="text-sm text-slate-400 flex items-center gap-2">
+                    {selectedItem.type === 'resume' ? 'Resume Analysis' : 'Career Roadmap'}
+                    <span className="w-1 h-1 rounded-full bg-slate-600" />
+                    {formatDate(selectedItem.data.createdAt)}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setSelectedItem(null)}
+                  className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-6">
+                {selectedItem.type === 'resume' ? (
+                  <ResumeAnalysisResult analysis={selectedItem.data} />
+                ) : (
+                  <RoadmapResult roadmap={selectedItem.data} />
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <Footer />
     </div>

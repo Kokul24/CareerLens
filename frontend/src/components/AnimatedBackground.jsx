@@ -2,7 +2,8 @@ import React, { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 
 // Starfield / Particle effect canvas
-const ParticleField = () => {
+// Starfield / Particle effect canvas
+const ParticleField = ({ className = "fixed inset-0 pointer-events-none z-0" }) => {
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -12,12 +13,15 @@ const ParticleField = () => {
     let animationId;
     let particles = [];
 
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+    // Use parent container dimensions if not fixed full screen
+    const updateDimensions = () => {
+      const parent = canvas.parentElement;
+      canvas.width = parent ? parent.clientWidth : window.innerWidth;
+      canvas.height = parent ? parent.clientHeight : window.innerHeight;
     };
-    resize();
-    window.addEventListener('resize', resize);
+
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
 
     class Particle {
       constructor() {
@@ -83,22 +87,22 @@ const ParticleField = () => {
 
     return () => {
       cancelAnimationFrame(animationId);
-      window.removeEventListener('resize', resize);
+      window.removeEventListener('resize', updateDimensions);
     };
   }, []);
 
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-0"
+      className={className}
       style={{ opacity: 0.6 }}
     />
   );
 };
 
 // Floating gradient orbs
-const GlowOrbs = () => (
-  <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+const GlowOrbs = ({ className = "fixed inset-0 pointer-events-none z-0 overflow-hidden" }) => (
+  <div className={className}>
     <motion.div
       className="absolute w-[600px] h-[600px] rounded-full"
       style={{
@@ -144,9 +148,9 @@ const GlowOrbs = () => (
 );
 
 // Grid overlay
-const GridOverlay = () => (
+const GridOverlay = ({ className = "fixed inset-0 pointer-events-none z-0" }) => (
   <div
-    className="fixed inset-0 pointer-events-none z-0"
+    className={className}
     style={{
       backgroundImage: `
         linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),

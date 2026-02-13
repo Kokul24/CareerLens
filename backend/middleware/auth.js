@@ -20,8 +20,15 @@ export const protect = async (req, res, next) => {
     }
 
     try {
+      if (!process.env.JWT_SECRET) {
+        return res.status(500).json({
+          success: false,
+          message: 'JWT_SECRET is not configured'
+        });
+      }
+
       // Verify token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'careerlens_secret_key_2024');
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
       
       // Get user from token
       req.user = await User.findById(decoded.id);

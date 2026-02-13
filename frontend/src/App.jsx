@@ -3,7 +3,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { AnimatePresence } from 'framer-motion';
-import Landing from './pages/Landing';
+
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
@@ -18,8 +18,7 @@ function App() {
     return (
         <AnimatePresence mode="wait">
             <Routes>
-                <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Landing />} />
-                <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Login />} />
+                <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Login />} />
                 <Route path="/register" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Register />} />
 
                 {/* Protected Routes */}

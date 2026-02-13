@@ -27,8 +27,8 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-export const upload = multer({ 
-  storage, 
+export const upload = multer({
+  storage,
   fileFilter,
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
@@ -37,18 +37,18 @@ export const upload = multer({
 export const analyzeResume = async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Please upload a PDF resume' 
+      return res.status(400).json({
+        success: false,
+        message: 'Please upload a PDF resume'
       });
     }
 
     const { targetRole, jobDescription } = req.body;
 
     if (!targetRole) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Target role is required' 
+      return res.status(400).json({
+        success: false,
+        message: 'Target role is required'
       });
     }
 
@@ -63,7 +63,7 @@ export const analyzeResume = async (req, res) => {
     const model = getGeminiModel();
 
     // Create detailed prompt for Gemini
-    const prompt = `You are an expert ATS (Applicant Tracking System) and resume reviewer. Analyze this resume for the role: "${targetRole}".
+    const prompt = `You are an expert Campus Placement Recruiter and ATS reviewer. Analyze this college student's resume for the entry-level role: "${targetRole}".
 
 Resume Content:
 ${resumeText}
@@ -83,35 +83,44 @@ Provide a comprehensive analysis in JSON format:
   },
   "keywordOptimization": {
     "score": 60,
-    "matchedKeywords": ["JavaScript", "Python", "React"],
-    "missingKeywords": ["Docker", "Kubernetes", "AWS"]
+    "matchedKeywords": ["Java", "DSA", "SQL"],
+    "missingKeywords": ["System Design Basics", "Git", "Project Keywords"]
   },
   "formatting": {
     "score": 90,
-    "feedback": ["Good use of bullet points", "Clear section headers"]
+    "feedback": ["Feedback on layout", "Font readability"]
   },
   "experienceRelevance": {
     "score": 65,
-    "feedback": ["Feedback 1"]
+    "feedback": ["Feedback on Internships/Projects"]
   },
   "strengths": [
-    "Successfully managed cross-functional teams of 12+ members",
-    "5+ years of experience with React, Node.js, and cloud platforms"
+    "Strong academic project in MERN stack",
+    "Good understanding of Data Structures & Algorithms",
+    " Internship experience at XYZ Corp"
   ],
   "areasForImprovement": [
-    "Missing industry certifications (AWS, Google Cloud, Azure, etc.)",
-    "Limited quantified metrics",
-    "Vague bullet points"
+    "Lack of deployed project links (GitHub/Live Demo)",
+    "Vague project descriptions without tech stack details",
+    "Missing coding profile links (LeetCode/CodeChef)"
   ],
   "recommendations": [
-    "Add specific metrics to ALL achievements",
-    "Include 2-3 relevant industry certifications",
-    "Quantify project scope"
+    "Add GitHub links to all projects",
+    "Mention specific technologies used in projects",
+    "Include LeetCode/CodeChef ratings"
   ],
-  "industryComparison": "The resume demonstrates a basic foundation in full-stack development but lacks competitive advantages. Top-performing resumes typically feature 80%+ accomplishments with quantifiable results."
+  "industryComparison": "This resume is [Above Average/Average/Below Average] for a campus placement candidate. Top candidates typically have 2+ good projects and 1 internship."
 }
 
-Score out of 100. Be critical and provide actionable feedback. Focus on ATS optimization, quantifiable achievements, and relevance to ${targetRole}.`;
+Score out of 100.
+Critical Focus Areas for Students:
+1. PROJECTS (Complexity & Tech Stack)
+2. INTERNSHIPS (Real-world experience)
+3. SKILLS (relevance to ${targetRole})
+4. CODING PROFILES (DSA proficiency)
+5. FORMATTING (Professional one-page layout)
+
+Be strict but constructive.`;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
@@ -153,16 +162,16 @@ Score out of 100. Be critical and provide actionable feedback. Focus on ATS opti
 
   } catch (error) {
     console.error('Error analyzing resume:', error);
-    
+
     // Clean up file if it exists
     if (req.file && fs.existsSync(req.file.path)) {
       fs.unlinkSync(req.file.path);
     }
 
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to analyze resume', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to analyze resume',
+      error: error.message
     });
   }
 };
@@ -181,10 +190,10 @@ export const getResumeHistory = async (req, res) => {
 
   } catch (error) {
     console.error('Error fetching resume history:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to fetch resume history', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch resume history',
+      error: error.message
     });
   }
 };
@@ -209,10 +218,10 @@ export const getResumeById = async (req, res) => {
 
   } catch (error) {
     console.error('Error fetching resume analysis:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to fetch resume analysis', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch resume analysis',
+      error: error.message
     });
   }
 };
@@ -244,10 +253,10 @@ export const updateResume = async (req, res) => {
 
   } catch (error) {
     console.error('Error updating resume analysis:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to update resume analysis', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update resume analysis',
+      error: error.message
     });
   }
 };
@@ -273,10 +282,10 @@ export const deleteResume = async (req, res) => {
 
   } catch (error) {
     console.error('Error deleting resume analysis:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to delete resume analysis', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete resume analysis',
+      error: error.message
     });
   }
 };

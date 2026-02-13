@@ -15,10 +15,10 @@ export const getAllRoadmaps = async (req, res) => {
 
   } catch (error) {
     console.error('Error fetching roadmaps:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to fetch roadmaps', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch roadmaps',
+      error: error.message
     });
   }
 };
@@ -43,10 +43,10 @@ export const getRoadmapById = async (req, res) => {
 
   } catch (error) {
     console.error('Error fetching roadmap:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to fetch roadmap', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch roadmap',
+      error: error.message
     });
   }
 };
@@ -78,10 +78,10 @@ export const updateRoadmap = async (req, res) => {
 
   } catch (error) {
     console.error('Error updating roadmap:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to update roadmap', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update roadmap',
+      error: error.message
     });
   }
 };
@@ -107,10 +107,10 @@ export const deleteRoadmap = async (req, res) => {
 
   } catch (error) {
     console.error('Error deleting roadmap:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to delete roadmap', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete roadmap',
+      error: error.message
     });
   }
 };
@@ -121,19 +121,19 @@ export const generateRoadmap = async (req, res) => {
     const { targetRole, currentSkills, experienceLevel } = req.body;
 
     if (!targetRole) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Target role is required' 
+      return res.status(400).json({
+        success: false,
+        message: 'Target role is required'
       });
     }
 
     const model = getGeminiModel();
 
     // Create detailed prompt for Gemini
-    const prompt = `You are a career advisor AI. Generate a comprehensive skills roadmap for someone targeting the role: "${targetRole}".
+    const prompt = `You are a specialized career advisor AI for college students preparing for campus placements. Generate a comprehensive skills roadmap for a student targeting the role: "${targetRole}".
 
 Current skills: ${currentSkills?.join(', ') || 'None specified'}
-Experience level: ${experienceLevel || 'Intermediate'}
+Experience level: ${experienceLevel || 'Fresher/Entry-Level'}
 
 Please provide a detailed JSON response with the following structure:
 {
@@ -144,7 +144,7 @@ Please provide a detailed JSON response with the following structure:
       "currentDemand": 8,
       "estimatedTime": "3-6 months",
       "salaryImpact": "+₹3L",
-      "description": "Why this skill matters"
+      "description": "Why this skill matters for placements"
     }
   ],
   "currentSkillsAssessment": [
@@ -154,12 +154,12 @@ Please provide a detailed JSON response with the following structure:
       "marketDemand": 9
     }
   ],
-  "estimatedCompletionTime": "22 months",
-  "salaryBoost": "+₹21L",
-  "careerPath": "Brief description of the career path"
+  "estimatedCompletionTime": "6 months",
+  "salaryBoost": "+₹3-5 LPA",
+  "careerPath": "Brief description of the career path for a fresher"
 }
 
-Focus on trending technologies and in-demand skills for ${targetRole}. Include 20 trending skills and 10 current skills. Be specific with time estimates and salary impacts in Indian Rupees (₹).`;
+Focus on CURRENT placement trends (2025-2026), key technologies asked in interview rounds, and foundational skills (DSA, System Design Basics) required for freshers. Include 15 trending skills and 5 foundational skills. Be specific with time estimates and salary impacts in Indian Rupees (₹ LPA).`;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
@@ -192,10 +192,10 @@ Focus on trending technologies and in-demand skills for ${targetRole}. Include 2
 
   } catch (error) {
     console.error('Error generating roadmap:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to generate roadmap', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate roadmap',
+      error: error.message
     });
   }
 };
@@ -240,10 +240,10 @@ Include at least 6 resources from various platforms (Udemy, Coursera, freeCodeCa
 
   } catch (error) {
     console.error('Error fetching resources:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to fetch learning resources', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch learning resources',
+      error: error.message
     });
   }
 };
@@ -281,10 +281,10 @@ Provide a JSON response:
 
   } catch (error) {
     console.error('Error analyzing career path:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to analyze career path', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to analyze career path',
+      error: error.message
     });
   }
 };

@@ -3,7 +3,11 @@ import jwt from 'jsonwebtoken';
 
 // Generate JWT Token
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET || 'careerlens_secret_key_2024', {
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET is not configured');
+  }
+
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: '7d'
   });
 };
@@ -13,7 +17,7 @@ const generateToken = (id) => {
 // @access  Public
 export const register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, college, degree, graduationYear } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -28,7 +32,10 @@ export const register = async (req, res) => {
     const user = await User.create({
       name,
       email,
-      password
+      password,
+      college,
+      degree,
+      graduationYear
     });
 
     // Generate token
@@ -70,7 +77,7 @@ export const login = async (req, res) => {
 
     // Find user and include password for comparison
     const user = await User.findOne({ email }).select('+password');
-    
+
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -80,7 +87,7 @@ export const login = async (req, res) => {
 
     // Check password
     const isPasswordMatch = await user.comparePassword(password);
-    
+
     if (!isPasswordMatch) {
       return res.status(401).json({
         success: false,
@@ -116,7 +123,7 @@ export const login = async (req, res) => {
 export const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
-    
+
     res.status(200).json({
       success: true,
       user: {
