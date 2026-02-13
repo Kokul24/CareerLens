@@ -185,20 +185,6 @@ const CareerNavigator = () => {
 
                 {/* Right Column: Info Panels (5 cols) */}
                 <div className="lg:col-span-5 space-y-6">
-                  {/* Unsure Panel */}
-                  <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="glass-card p-6 bg-gradient-to-br from-indigo-600/20 to-purple-600/20 border-indigo-500/30"
-                  >
-                    <h3 className="text-lg font-bold text-white mb-2">Unsure about your career?</h3>
-                    <p className="text-sm text-slate-300 mb-4">Not sure what role fits you yet? We'll help you figure it out based on your interests.</p>
-                    <button className="text-sm font-semibold text-cyan-400 flex items-center gap-1 hover:gap-2 transition-all">
-                      Explore career paths <ArrowRight className="w-4 h-4" />
-                    </button>
-                  </motion.div>
-
                   {/* Placement Trends & Facts */}
                   <motion.div
                     initial={{ opacity: 0, x: 20 }}

@@ -57,11 +57,11 @@ const History = () => {
   const loading = tab === 'resumes' ? resumeLoading : roadmapLoading;
 
   return (
-    <div className="relative min-h-screen">
+    <div className="relative min-h-screen flex flex-col">
       <AnimatedBackground />
       <Navbar />
 
-      <div className="relative z-10 pt-24 pb-16 px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 pt-24 pb-16 px-4 sm:px-6 lg:px-8 flex-grow">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <motion.div
@@ -89,8 +89,8 @@ const History = () => {
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setTab(t.key)}
                 className={`relative px-5 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${tab === t.key
-                    ? 'text-white'
-                    : 'text-slate-400 hover:text-white bg-white/[0.03]'
+                  ? 'text-white'
+                  : 'text-slate-400 hover:text-white bg-white/[0.03]'
                   }`}
               >
                 <t.icon className="w-4 h-4" />
@@ -146,8 +146,8 @@ const History = () => {
                               <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{item.fileName}</p>
                             </div>
                             <div className={`text-2xl font-bold ${item.overallScore >= 80 ? 'text-green-400' :
-                                item.overallScore >= 60 ? 'text-cyan-400' :
-                                  item.overallScore >= 40 ? 'text-amber-400' : 'text-red-400'
+                              item.overallScore >= 60 ? 'text-cyan-400' :
+                                item.overallScore >= 40 ? 'text-amber-400' : 'text-red-400'
                               }`}>
                               {item.overallScore}
                             </div>
