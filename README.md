@@ -109,11 +109,6 @@ A dynamic roadmap generator for students unsure about their path or looking to u
 
 ---
 
-## 🔮 Future Roadmap
-*   **Mock Interview Bot:** AI-driven voice interview practice.
-*   **Alumni Connect:** Feature to connect students with placed seniors.
-*   **Code Reviewer:** Direct GitHub repo analysis for project quality.
 
----
 
 *Built with ❤️ for the Next Gen of Engineers.*

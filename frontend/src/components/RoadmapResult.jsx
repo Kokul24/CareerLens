@@ -78,16 +78,16 @@ const RoadmapResult = ({ roadmap }) => {
 
     // Page 3 Data: Courses (Mock)
     const courses = [
-        { title: 'The Complete Web Developer Bootcamp', platform: 'Udemy', link: 'https://www.udemy.com/', color: 'from-purple-500 to-pink-500' },
-        { title: 'Machine Learning Specialization', platform: 'Coursera', link: 'https://www.coursera.org/', color: 'from-blue-500 to-cyan-500' },
-        { title: 'CS50: Introduction to Computer Science', platform: 'Harvard (edX)', link: 'https://www.edx.org/', color: 'from-neutral-700 to-neutral-500' },
-        { title: 'Data Science Fundamentals', platform: 'Khan Academy', link: 'https://www.khanacademy.org/', color: 'from-green-500 to-emerald-500' },
-        { title: 'React - The Complete Guide', platform: 'Udemy', link: 'https://www.udemy.com/', color: 'from-blue-400 to-indigo-500' },
-        { title: 'Google Data Analytics Certificate', platform: 'Coursera', link: 'https://www.coursera.org/', color: 'from-yellow-500 to-orange-500' },
-        { title: 'AWS Certified Solutions Architect', platform: 'Udemy', link: 'https://www.udemy.com/', color: 'from-orange-400 to-red-500' },
-        { title: 'Introduction to Artificial Intelligence', platform: 'Udacity', link: 'https://www.udacity.com/', color: 'from-teal-500 to-green-500' },
-        { title: 'Full Stack Open', platform: 'University of Helsinki', link: 'https://fullstackopen.com/en/', color: 'from-indigo-600 to-purple-600' },
-        { title: 'Python for Everybody', platform: 'Coursera', link: 'https://www.coursera.org/', color: 'from-blue-600 to-blue-400' }
+        { title: 'The Complete Web Developer Bootcamp', platform: 'Udemy', link: 'https://www.udemy.com/', color: 'from-purple-500 to-pink-500', logo: 'https://logo.clearbit.com/udemy.com' },
+        { title: 'Machine Learning Specialization', platform: 'Coursera', link: 'https://www.coursera.org/', color: 'from-blue-500 to-cyan-500', logo: 'https://logo.clearbit.com/coursera.org' },
+        { title: 'CS50: Introduction to Computer Science', platform: 'Harvard (edX)', link: 'https://www.edx.org/', color: 'from-neutral-700 to-neutral-500', logo: 'https://logo.clearbit.com/edx.org' },
+        { title: 'Data Science Fundamentals', platform: 'Khan Academy', link: 'https://www.khanacademy.org/', color: 'from-green-500 to-emerald-500', logo: 'https://logo.clearbit.com/khanacademy.org' },
+        { title: 'React - The Complete Guide', platform: 'Udemy', link: 'https://www.udemy.com/', color: 'from-blue-400 to-indigo-500', logo: 'https://logo.clearbit.com/udemy.com' },
+        { title: 'Google Data Analytics Certificate', platform: 'Coursera', link: 'https://www.coursera.org/', color: 'from-yellow-500 to-orange-500', logo: 'https://logo.clearbit.com/coursera.org' },
+        { title: 'AWS Certified Solutions Architect', platform: 'Udemy', link: 'https://www.udemy.com/', color: 'from-orange-400 to-red-500', logo: 'https://logo.clearbit.com/udemy.com' },
+        { title: 'Introduction to Artificial Intelligence', platform: 'Udacity', link: 'https://www.udacity.com/', color: 'from-teal-500 to-green-500', logo: 'https://logo.clearbit.com/udacity.com' },
+        { title: 'Full Stack Open', platform: 'University of Helsinki', link: 'https://fullstackopen.com/en/', color: 'from-indigo-600 to-purple-600', logo: 'https://logo.clearbit.com/helsinki.fi' },
+        { title: 'Python for Everybody', platform: 'Coursera', link: 'https://www.coursera.org/', color: 'from-blue-600 to-blue-400', logo: 'https://logo.clearbit.com/coursera.org' }
     ];
 
     const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 3));
@@ -457,8 +457,19 @@ const RoadmapResult = ({ roadmap }) => {
                                         className="group relative overflow-hidden rounded-xl glass-card border border-white/10 hover:border-indigo-500/50 transition-all cursor-pointer"
                                         onClick={() => window.open(course.link, '_blank')}
                                     >
-                                        <div className={`h-28 bg-gradient-to-br ${course.color} opacity-80 group-hover:opacity-100 transition-opacity flex items-center justify-center`}>
-                                            <BookOpen className="w-10 h-10 text-white/90" />
+                                        <div className={`h-28 bg-gradient-to-br ${course.color} opacity-80 group-hover:opacity-100 transition-opacity flex items-center justify-center relative`}>
+                                            <div className="w-20 h-20 bg-white/90 rounded-full flex items-center justify-center shadow-lg p-3">
+                                                <img
+                                                    src={course.logo}
+                                                    alt={course.platform}
+                                                    className="w-full h-full object-contain"
+                                                    onError={(e) => {
+                                                        e.target.style.display = 'none';
+                                                        e.target.nextSibling.style.display = 'block';
+                                                    }}
+                                                />
+                                                <BookOpen className="w-8 h-8 text-black hidden" style={{ display: 'none' }} />
+                                            </div>
                                         </div>
                                         <div className="p-5">
                                             <div className="text-xs font-semibold text-indigo-400 mb-1 uppercase tracking-wider">
