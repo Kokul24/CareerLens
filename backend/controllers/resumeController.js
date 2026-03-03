@@ -261,6 +261,122 @@ export const updateResume = async (req, res) => {
   }
 };
 
+// Re-Analyze Resume using updated skills / target role (UPDATE with AI regeneration)
+export const reanalyzeResume = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { targetRole, skills, jobDescription } = req.body;
+
+    if (!targetRole || !skills) {
+      return res.status(400).json({
+        success: false,
+        message: 'Target role and skills are required',
+      });
+    }
+
+    const existingAnalysis = await ResumeAnalysis.findOne({ _id: id, userId: req.user._id });
+
+    if (!existingAnalysis) {
+      return res.status(404).json({ success: false, message: 'Resume analysis not found' });
+    }
+
+    const model = getGeminiModel();
+
+    const prompt = `You are an expert Campus Placement Recruiter and ATS reviewer. Analyze this candidate's profile for the role: "${targetRole}".
+
+Candidate Skills & Profile:
+${skills}
+
+${jobDescription ? `Job Description:\n${jobDescription}\n` : ''}
+
+Provide a comprehensive resume analysis in JSON format:
+{
+  "overallScore": 75,
+  "atsCompatibility": {
+    "score": 85,
+    "issues": ["Issue 1", "Issue 2"]
+  },
+  "contentQuality": {
+    "score": 70,
+    "feedback": ["Feedback 1", "Feedback 2"]
+  },
+  "keywordOptimization": {
+    "score": 60,
+    "matchedKeywords": ["Java", "DSA", "SQL"],
+    "missingKeywords": ["System Design Basics", "Git", "Project Keywords"]
+  },
+  "formatting": {
+    "score": 90,
+    "feedback": ["Feedback on layout", "Readability"]
+  },
+  "experienceRelevance": {
+    "score": 65,
+    "feedback": ["Feedback on experience relevance"]
+  },
+  "strengths": ["Strength 1", "Strength 2"],
+  "areasForImprovement": ["Area 1", "Area 2"],
+  "recommendations": ["Recommendation 1", "Recommendation 2"],
+  "industryComparison": "This profile is [Above Average/Average/Below Average] for a ${targetRole} candidate."
+}
+
+Score out of 100. Be strict but constructive.`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    let text = response.text();
+    text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+    const aiData = JSON.parse(text);
+
+    // Build snapshot of current state to store as previousAnalysis
+    const previousSnapshot = {
+      overallScore: existingAnalysis.overallScore,
+      analysis: existingAnalysis.analysis,
+      strengths: existingAnalysis.strengths,
+      areasForImprovement: existingAnalysis.areasForImprovement,
+      recommendations: existingAnalysis.recommendations,
+      industryComparison: existingAnalysis.industryComparison,
+      targetRole: existingAnalysis.targetRole,
+      skills: existingAnalysis.skills || '',
+      snapshotDate: existingAnalysis.updatedAt || existingAnalysis.createdAt,
+    };
+
+    const updated = await ResumeAnalysis.findOneAndUpdate(
+      { _id: id, userId: req.user._id },
+      {
+        $set: {
+          targetRole,
+          skills,
+          jobDescription: jobDescription || existingAnalysis.jobDescription,
+          overallScore: aiData.overallScore,
+          analysis: {
+            atsCompatibility: aiData.atsCompatibility,
+            contentQuality: aiData.contentQuality,
+            keywordOptimization: aiData.keywordOptimization,
+            formatting: aiData.formatting,
+            experienceRelevance: aiData.experienceRelevance,
+          },
+          strengths: aiData.strengths,
+          areasForImprovement: aiData.areasForImprovement,
+          recommendations: aiData.recommendations,
+          industryComparison: aiData.industryComparison,
+          previousAnalysis: previousSnapshot,
+          updatedAt: new Date(),
+        },
+      },
+      { new: true }
+    );
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('Error re-analyzing resume:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to re-analyze resume',
+      error: error.message,
+    });
+  }
+};
+
 // Delete Resume Analysis (DELETE) - user-specific
 export const deleteResume = async (req, res) => {
   try {

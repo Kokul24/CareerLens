@@ -1,12 +1,43 @@
 import mongoose from 'mongoose';
 
+const MONGO_OPTIONS = {
+  // How long (ms) the driver waits before timing out while selecting a server
+  serverSelectionTimeoutMS: 10000,
+  // How long (ms) a single socket may stay idle before being closed
+  socketTimeoutMS: 45000,
+  // How long (ms) to wait for a new connection to be established
+  connectTimeoutMS: 10000,
+  // Retry failed reads/writes automatically (Atlas supports this)
+  retryWrites: true,
+  retryReads: true,
+  // Keep the connection alive at the TCP level
+  family: 4, // Force IPv4 – avoids IPv6 ECONNRESET on some networks
+};
+
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI);
+    const conn = await mongoose.connect(process.env.MONGODB_URI, MONGO_OPTIONS);
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+
+    // Reconnect automatically on unexpected disconnection
+    mongoose.connection.on('disconnected', () => {
+      console.warn('⚠️  MongoDB disconnected – retrying in 5 s…');
+      setTimeout(() => connectDB(), 5000);
+    });
+
+    mongoose.connection.on('error', (err) => {
+      console.error('❌ MongoDB connection error:', err.message);
+    });
+
+    mongoose.connection.on('reconnected', () => {
+      console.log('✅ MongoDB reconnected');
+    });
+
   } catch (error) {
-    console.error(`❌ Error: ${error.message}`);
-    process.exit(1);
+    console.error(`❌ MongoDB connection failed: ${error.message}`);
+    // Retry instead of crashing the process immediately
+    console.log('🔄 Retrying connection in 5 s…');
+    setTimeout(() => connectDB(), 5000);
   }
 };
 

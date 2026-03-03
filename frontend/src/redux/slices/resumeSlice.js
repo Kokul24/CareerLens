@@ -69,6 +69,19 @@ export const deleteResume = createAsyncThunk(
   }
 );
 
+// RE-ANALYZE resume with new skills (POST to /api/resume/:id/reanalyze)
+export const reanalyzeResume = createAsyncThunk(
+  'resume/reanalyzeResume',
+  async ({ id, data }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`/api/resume/${id}/reanalyze`, data);
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to re-analyze resume');
+    }
+  }
+);
+
 const resumeSlice = createSlice({
   name: 'resume',
   initialState: {
@@ -155,6 +168,23 @@ const resumeSlice = createSlice({
         }
       })
       .addCase(deleteResume.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Re-Analyze Resume
+      .addCase(reanalyzeResume.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(reanalyzeResume.fulfilled, (state, action) => {
+        state.loading = false;
+        state.analysis = action.payload;
+        const index = state.history.findIndex(r => r._id === action.payload._id);
+        if (index !== -1) {
+          state.history[index] = action.payload;
+        }
+      })
+      .addCase(reanalyzeResume.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

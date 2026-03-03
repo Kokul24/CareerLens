@@ -51,6 +51,20 @@ const resumeAnalysisSchema = new mongoose.Schema({
   areasForImprovement: [String],
   recommendations: [String],
   industryComparison: String,
+  // Skills/profile text used for re-analysis
+  skills: {
+    type: String,
+    default: '',
+  },
+  // Snapshot of the previous analysis (before latest update)
+  previousAnalysis: {
+    type: mongoose.Schema.Types.Mixed,
+    default: null,
+  },
+  updatedAt: {
+    type: Date,
+    default: null,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

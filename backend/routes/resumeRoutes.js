@@ -5,7 +5,8 @@ import {
   getResumeHistory,
   getResumeById,
   updateResume,
-  deleteResume
+  deleteResume,
+  reanalyzeResume
 } from '../controllers/resumeController.js';
 import { protect } from '../middleware/auth.js';
 
@@ -22,6 +23,9 @@ router.get('/history', getResumeHistory);
 
 // GET /api/resume/:id - Get single resume analysis (READ ONE)
 router.get('/:id', getResumeById);
+
+// POST /api/resume/:id/reanalyze - Re-analyze resume with new skills (UPDATE via AI)
+router.post('/:id/reanalyze', reanalyzeResume);
 
 // PUT /api/resume/:id - Update resume analysis (UPDATE)
 router.put('/:id', updateResume);
