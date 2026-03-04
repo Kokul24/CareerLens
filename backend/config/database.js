@@ -2,11 +2,11 @@ import mongoose from 'mongoose';
 
 const MONGO_OPTIONS = {
   // How long (ms) the driver waits before timing out while selecting a server
-  serverSelectionTimeoutMS: 10000,
+  serverSelectionTimeoutMS: 5000,
   // How long (ms) a single socket may stay idle before being closed
   socketTimeoutMS: 45000,
   // How long (ms) to wait for a new connection to be established
-  connectTimeoutMS: 10000,
+  connectTimeoutMS: 5000,
   // Retry failed reads/writes automatically (Atlas supports this)
   retryWrites: true,
   retryReads: true,

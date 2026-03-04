@@ -21,6 +21,8 @@ const FEATURE_COLS = [
 
 let classifier = null;
 let modelReady = false;
+let trainingPromise = null;
+const MODEL_CACHE_PATH = path.join(__dirname, '..', 'data', 'stress_model_cache.json');
 
 // ──────────────────────────────────────────────
 // Train the model once when the server boots
@@ -29,6 +31,7 @@ function loadAndTrain() {
   return new Promise((resolve, reject) => {
     const rows = [];
     const csvPath = path.join(__dirname, '..', 'data', 'stress_training_data.csv');
+    const trainStart = Date.now();
 
     fs.createReadStream(csvPath)
       .pipe(csv())
@@ -54,24 +57,65 @@ function loadAndTrain() {
         console.log(`📊 Training stress model on ${rows.length} samples…`);
 
         classifier = new RandomForestClassifier({
-          nEstimators: 50,
+          nEstimators: 30,
           maxDepth: 10,
           seed: 42,
         });
         classifier.train(X, Y);
         modelReady = true;
 
-        console.log('✅ Stress ML model trained successfully');
+        try {
+          fs.writeFileSync(MODEL_CACHE_PATH, JSON.stringify(classifier.toJSON()));
+          console.log('💾 Stress ML model cache saved');
+        } catch (cacheError) {
+          console.warn('⚠️ Could not save stress model cache:', cacheError.message);
+        }
+
+        console.log(`✅ Stress ML model trained successfully in ${Date.now() - trainStart} ms`);
         resolve();
       })
       .on('error', reject);
   });
 }
 
-// Start training immediately on import
-const trainingPromise = loadAndTrain().catch((err) => {
-  console.error('❌ ML model training failed:', err.message);
-});
+function tryLoadCachedModel() {
+  try {
+    if (!fs.existsSync(MODEL_CACHE_PATH)) return false;
+    const raw = fs.readFileSync(MODEL_CACHE_PATH, 'utf-8');
+    const model = JSON.parse(raw);
+    classifier = RandomForestClassifier.load(model);
+    modelReady = true;
+    console.log('⚡ Stress ML model loaded from cache');
+    return true;
+  } catch (error) {
+    console.warn('⚠️ Stress model cache is invalid, retraining:', error.message);
+    return false;
+  }
+}
+
+async function ensureModelReady() {
+  if (modelReady && classifier) return;
+
+  if (!trainingPromise) {
+    trainingPromise = (async () => {
+      const loadedFromCache = tryLoadCachedModel();
+      if (loadedFromCache) return;
+      await loadAndTrain();
+    })().catch((err) => {
+      modelReady = false;
+      classifier = null;
+      throw err;
+    });
+  }
+
+  await trainingPromise;
+}
+
+export function warmupStressModel() {
+  ensureModelReady().catch((err) => {
+    console.error('❌ Stress ML warmup failed:', err.message);
+  });
+}
 
 // ──────────────────────────────────────────────
 // Generate actionable suggestions
@@ -115,8 +159,7 @@ function buildSuggestions(input, level) {
 // Public API
 // ──────────────────────────────────────────────
 export async function predictStress(studentInputsArray) {
-  // Wait for model if it hasn't finished training yet
-  await trainingPromise;
+  await ensureModelReady();
 
   if (!modelReady || !classifier) {
     throw new Error('ML model is not ready yet. Please try again shortly.');

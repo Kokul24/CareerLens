@@ -1,5 +1,6 @@
 node_modules/
 .env
+data/stress_model_cache.json
 uploads/
 *.log
 .DS_Store

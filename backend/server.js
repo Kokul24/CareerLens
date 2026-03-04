@@ -6,6 +6,7 @@ import careerRoutes from './routes/careerRoutes.js';
 import resumeRoutes from './routes/resumeRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import stressRoutes from './routes/stressRoutes.js';
+import { warmupStressModel } from './services/stressMlService.js';
 
 // Load environment variables
 dotenv.config();
@@ -51,4 +52,7 @@ const PORT = process.env.PORT || 5001;
 
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on http://localhost:${PORT}`);
+  if (process.env.STRESS_MODEL_WARMUP === 'true') {
+    setImmediate(() => warmupStressModel());
+  }
 });
