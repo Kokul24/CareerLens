@@ -84,7 +84,7 @@ A dynamic roadmap generator for students unsure about their path or looking to u
 
 1.  **Clone the repository**
     ```bash
-    git clone https://github.com/yourusername/careerlens.git
+    git clone https://github.com/Kokul24/CareerLens.git
     cd CareerLens
     ```
 

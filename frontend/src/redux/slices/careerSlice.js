@@ -1,12 +1,19 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
+const API_BASE_URL = 'http://localhost:5001';
+
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
 // Async thunks
 export const generateRoadmap = createAsyncThunk(
   'career/generateRoadmap',
   async (data, { rejectWithValue }) => {
     try {
-      const response = await axios.post('/api/career/roadmap', data);
+      const response = await axios.post(`${API_BASE_URL}/api/career/roadmap`, data, { headers: getAuthHeaders() });
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to generate roadmap');
@@ -18,7 +25,7 @@ export const getLearningResources = createAsyncThunk(
   'career/getLearningResources',
   async (skillName, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`/api/career/resources/${skillName}`);
+      const response = await axios.get(`${API_BASE_URL}/api/career/resources/${skillName}`, { headers: getAuthHeaders() });
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch resources');
@@ -31,7 +38,7 @@ export const getAllRoadmaps = createAsyncThunk(
   'career/getAllRoadmaps',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get('/api/career/roadmaps');
+      const response = await axios.get(`${API_BASE_URL}/api/career/roadmaps`, { headers: getAuthHeaders() });
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch roadmaps');
@@ -44,7 +51,7 @@ export const getRoadmapById = createAsyncThunk(
   'career/getRoadmapById',
   async (id, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`/api/career/roadmap/${id}`);
+      const response = await axios.get(`${API_BASE_URL}/api/career/roadmap/${id}`, { headers: getAuthHeaders() });
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch roadmap');
@@ -57,7 +64,7 @@ export const updateRoadmap = createAsyncThunk(
   'career/updateRoadmap',
   async ({ id, data }, { rejectWithValue }) => {
     try {
-      const response = await axios.put(`/api/career/roadmap/${id}`, data);
+      const response = await axios.put(`${API_BASE_URL}/api/career/roadmap/${id}`, data, { headers: getAuthHeaders() });
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to update roadmap');
@@ -70,7 +77,7 @@ export const deleteRoadmap = createAsyncThunk(
   'career/deleteRoadmap',
   async (id, { rejectWithValue }) => {
     try {
-      const response = await axios.delete(`/api/career/roadmap/${id}`);
+      const response = await axios.delete(`${API_BASE_URL}/api/career/roadmap/${id}`, { headers: getAuthHeaders() });
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to delete roadmap');

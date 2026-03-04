@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -11,6 +10,7 @@ import CareerNavigator from './pages/CareerNavigator';
 import ResumeScorer from './pages/ResumeScorer';
 import History from './pages/History';
 import ProtectedRoute from './components/ProtectedRoute';
+import ActivitiesPage from './pages/ActivitiesPage';
 
 function App() {
     const { isAuthenticated } = useSelector((state) => state.auth);
@@ -40,6 +40,11 @@ function App() {
                 <Route path="/history" element={
                     <ProtectedRoute>
                         <History />
+                    </ProtectedRoute>
+                } />
+                <Route path="/activities" element={
+                    <ProtectedRoute>
+                        <ActivitiesPage />
                     </ProtectedRoute>
                 } />
 

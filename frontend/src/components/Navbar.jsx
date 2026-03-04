@@ -47,6 +47,7 @@ const Navbar = () => {
         { to: '/career-navigator', label: 'Career Navigator', icon: Compass },
         { to: '/resume-scorer', label: 'Resume Scorer', icon: FileText },
         { to: '/history', label: 'History', icon: History },
+        { to: '/activities', label: 'Activities', icon: FileText }, // Added Activities link
       ]
     : [
         { to: '/#features', label: 'Features', icon: null },

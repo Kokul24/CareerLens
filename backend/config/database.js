@@ -34,8 +34,9 @@ const connectDB = async () => {
     });
 
   } catch (error) {
-    console.error(`❌ MongoDB connection failed: ${error.message}`);
-    // Retry instead of crashing the process immediately
+    console.error(`❌ MongoDB Connection Error: ${error.message}`);
+    console.error('⚠️  Server will continue running but database features will not work.');
+    console.error('💡 Please check your MONGODB_URI in backend/.env file.');
     console.log('🔄 Retrying connection in 5 s…');
     setTimeout(() => connectDB(), 5000);
   }
