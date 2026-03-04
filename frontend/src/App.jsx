@@ -11,6 +11,7 @@ import ResumeScorer from './pages/ResumeScorer';
 import History from './pages/History';
 import ProtectedRoute from './components/ProtectedRoute';
 import ActivitiesPage from './pages/ActivitiesPage';
+import StressMonitor from './components/Modules/StressMonitor';
 
 function App() {
     const { isAuthenticated } = useSelector((state) => state.auth);
@@ -45,6 +46,11 @@ function App() {
                 <Route path="/activities" element={
                     <ProtectedRoute>
                         <ActivitiesPage />
+                    </ProtectedRoute>
+                } />
+                <Route path="/stress-monitor" element={
+                    <ProtectedRoute>
+                        <StressMonitor />
                     </ProtectedRoute>
                 } />
 

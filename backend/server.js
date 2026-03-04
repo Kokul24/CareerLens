@@ -5,6 +5,7 @@ import connectDB from './config/database.js';
 import careerRoutes from './routes/careerRoutes.js';
 import resumeRoutes from './routes/resumeRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import stressRoutes from './routes/stressRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -29,6 +30,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/career', careerRoutes);
 app.use('/api/resume', resumeRoutes);
+app.use('/api/stress', stressRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {

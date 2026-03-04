@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import axios from 'axios';
 import AnimatedBackground from '../components/AnimatedBackground';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -34,7 +35,24 @@ import {
   ChevronRight,
   Search,
   SlidersHorizontal,
+  Activity,
 } from 'lucide-react';
+
+const STRESS_API = 'http://localhost:5001/api/stress';
+
+const STRESS_BADGE = {
+  Low: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40',
+  Moderate: 'bg-amber-500/20 text-amber-400 border-amber-500/40',
+  High: 'bg-red-500/20 text-red-400 border-red-500/40',
+};
+
+const STRESS_FIELDS = [
+  { key: 'Study_Hours_Per_Day', label: 'Study', icon: '📚' },
+  { key: 'Extracurricular_Hours_Per_Day', label: 'Extra', icon: '🎭' },
+  { key: 'Sleep_Hours_Per_Day', label: 'Sleep', icon: '😴' },
+  { key: 'Social_Hours_Per_Day', label: 'Social', icon: '👥' },
+  { key: 'Physical_Activity_Hours_Per_Day', label: 'Physical', icon: '🏃' },
+];
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -381,14 +399,50 @@ const History = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [resumeSort, setResumeSort] = useState('newest');
   const [roadmapSort, setRoadmapSort] = useState('newest');
+  const [stressSort, setStressSort] = useState('newest');
+  const [stressFilterLevel, setStressFilterLevel] = useState('');
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { roadmaps, loading: roadmapLoading } = useSelector((state) => state.career);
   const { history, loading: resumeLoading } = useSelector((state) => state.resume);
+
+  // ── Stress logs state ──
+  const [stressLogs, setStressLogs] = useState([]);
+  const [stressLoading, setStressLoading] = useState(false);
+
+  const fetchStressLogs = useCallback(async () => {
+    setStressLoading(true);
+    try {
+      const { data } = await axios.get(`${STRESS_API}/logs`);
+      setStressLogs(data.data || []);
+    } catch (e) {
+      console.error('Failed to fetch stress logs', e);
+    } finally {
+      setStressLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     dispatch(getAllRoadmaps());
     dispatch(getResumeHistory());
-  }, [dispatch]);
+    fetchStressLogs();
+  }, [dispatch, fetchStressLogs]);
+
+  const handleDeleteStressLog = async (e, id) => {
+    e.stopPropagation();
+    if (!window.confirm('Delete this stress log?')) return;
+    try {
+      await axios.delete(`${STRESS_API}/log/${id}`);
+      await fetchStressLogs();
+    } catch (err) {
+      console.error('Delete failed', err);
+    }
+  };
+
+  const handleEditStressLog = (e, log) => {
+    e.stopPropagation();
+    navigate('/stress-monitor', { state: { editLog: log } });
+  };
 
   const handleDeleteRoadmap = (e, id) => {
     e.stopPropagation();
@@ -425,7 +479,7 @@ const History = () => {
     });
   };
 
-  const loading = tab === 'resumes' ? resumeLoading : roadmapLoading;
+  const loading = tab === 'resumes' ? resumeLoading : tab === 'roadmaps' ? roadmapLoading : stressLoading;
 
   // ── filtered + sorted lists ──────────────────────────────────────────────
   const q = searchQuery.trim().toLowerCase();
@@ -460,6 +514,29 @@ const History = () => {
       return 0;
     });
 
+  const filteredStressLogs = (stressLogs || [])
+    .filter((log) => {
+      const matchLevel = stressFilterLevel ? log.predictedStressLevel === stressFilterLevel : true;
+      const matchSearch = q
+        ? new Date(log.date).toLocaleDateString().toLowerCase().includes(q) ||
+          log.predictedStressLevel?.toLowerCase().includes(q)
+        : true;
+      return matchLevel && matchSearch;
+    })
+    .sort((a, b) => {
+      if (stressSort === 'newest') return new Date(b.date) - new Date(a.date);
+      if (stressSort === 'oldest') return new Date(a.date) - new Date(b.date);
+      if (stressSort === 'level-asc') {
+        const order = { Low: 0, Moderate: 1, High: 2 };
+        return (order[a.predictedStressLevel] || 0) - (order[b.predictedStressLevel] || 0);
+      }
+      if (stressSort === 'level-desc') {
+        const order = { Low: 0, Moderate: 1, High: 2 };
+        return (order[b.predictedStressLevel] || 0) - (order[a.predictedStressLevel] || 0);
+      }
+      return 0;
+    });
+
   return (
     <div className="relative min-h-screen flex flex-col">
       <AnimatedBackground />
@@ -489,6 +566,7 @@ const History = () => {
               {[
                 { key: 'resumes', label: 'Resume Analyses', icon: FileText, count: history?.length },
                 { key: 'roadmaps', label: 'Career Roadmaps', icon: Compass, count: roadmaps?.length },
+                { key: 'stress', label: 'Stress Logs', icon: Activity, count: stressLogs?.length },
               ].map((t) => (
                 <motion.button
                   key={t.key}
@@ -526,7 +604,9 @@ const History = () => {
                   placeholder={
                     tab === 'resumes'
                       ? 'Search by role or filename…'
-                      : 'Search by role or skill…'
+                      : tab === 'roadmaps'
+                      ? 'Search by role or skill…'
+                      : 'Search by date or stress level…'
                   }
                   className="w-full pl-9 pr-9 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 focus:bg-white/[0.06] transition-all"
                 />
@@ -544,11 +624,13 @@ const History = () => {
               <div className="relative">
                 <SlidersHorizontal className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500 pointer-events-none" />
                 <select
-                  value={tab === 'resumes' ? resumeSort : roadmapSort}
+                  value={tab === 'resumes' ? resumeSort : tab === 'roadmaps' ? roadmapSort : stressSort}
                   onChange={(e) =>
                     tab === 'resumes'
                       ? setResumeSort(e.target.value)
-                      : setRoadmapSort(e.target.value)
+                      : tab === 'roadmaps'
+                      ? setRoadmapSort(e.target.value)
+                      : setStressSort(e.target.value)
                   }
                   className="pl-8 pr-8 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-slate-300 focus:outline-none focus:border-indigo-500/50 appearance-none cursor-pointer transition-all hover:bg-white/[0.06]"
                 >
@@ -560,15 +642,36 @@ const History = () => {
                       <option value="score-asc">Score: Low → High</option>
                       <option value="az">A → Z</option>
                     </>
-                  ) : (
+                  ) : tab === 'roadmaps' ? (
                     <>
                       <option value="newest">Newest first</option>
                       <option value="oldest">Oldest first</option>
                       <option value="skills">Most skills</option>
                       <option value="az">A → Z</option>
                     </>
+                  ) : (
+                    <>
+                      <option value="newest">Newest first</option>
+                      <option value="oldest">Oldest first</option>
+                      <option value="level-desc">Stress: High → Low</option>
+                      <option value="level-asc">Stress: Low → High</option>
+                    </>
                   )}
                 </select>
+
+                {/* Stress level filter (only on stress tab) */}
+                {tab === 'stress' && (
+                  <select
+                    value={stressFilterLevel}
+                    onChange={(e) => setStressFilterLevel(e.target.value)}
+                    className="pl-4 pr-8 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-slate-300 focus:outline-none focus:border-indigo-500/50 appearance-none cursor-pointer transition-all hover:bg-white/[0.06]"
+                  >
+                    <option value="">All Levels</option>
+                    <option value="Low">🟢 Low</option>
+                    <option value="Moderate">🟡 Moderate</option>
+                    <option value="High">🔴 High</option>
+                  </select>
+                )}
               </div>
             </div>
 
@@ -577,7 +680,9 @@ const History = () => {
               <p className="text-xs text-slate-500">
                 {tab === 'resumes'
                   ? `${filteredResumes.length} of ${history?.length || 0} results`
-                  : `${filteredRoadmaps.length} of ${roadmaps?.length || 0} results`}
+                  : tab === 'roadmaps'
+                  ? `${filteredRoadmaps.length} of ${roadmaps?.length || 0} results`
+                  : `${filteredStressLogs.length} of ${stressLogs?.length || 0} results`}
               </p>
             )}
           </div>
@@ -778,6 +883,87 @@ const History = () => {
                       </StaggerItem>
                     ))}
                   </StaggerContainer>
+                )}
+              </motion.div>
+            )}
+
+            {/* Stress Logs */}
+            {tab === 'stress' && !loading && (
+              <motion.div
+                key="stress"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                {stressLogs?.length === 0 ? (
+                  <div className="glass-card p-12 text-center">
+                    <Activity className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+                    <p className="text-slate-400 mb-2">No stress logs yet</p>
+                    <Link to="/stress-monitor" className="text-sm text-indigo-400 hover:text-indigo-300">
+                      Log your first entry →
+                    </Link>
+                  </div>
+                ) : filteredStressLogs.length === 0 ? (
+                  <div className="glass-card p-12 text-center">
+                    <Search className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+                    <p className="text-slate-400 mb-1">No results for &ldquo;{searchQuery}&rdquo;</p>
+                    <button onClick={() => setSearchQuery('')} className="text-sm text-indigo-400 hover:text-indigo-300">Clear search</button>
+                  </div>
+                ) : (
+                  <div className="glass-card p-0 overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="text-left text-slate-400 border-b border-white/10 bg-white/[0.02]">
+                            <th className="px-5 py-3.5 font-medium">Date</th>
+                            {STRESS_FIELDS.map((f) => (
+                              <th key={f.key} className="px-3 py-3.5 font-medium whitespace-nowrap">{f.icon} {f.label}</th>
+                            ))}
+                            <th className="px-3 py-3.5 font-medium">Stress</th>
+                            <th className="px-5 py-3.5 font-medium text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredStressLogs.map((log) => (
+                            <tr
+                              key={log._id}
+                              className="border-b border-white/[0.04] hover:bg-white/[0.03] transition-colors"
+                            >
+                              <td className="px-5 py-3 whitespace-nowrap text-white">
+                                {new Date(log.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                              </td>
+                              {STRESS_FIELDS.map((f) => (
+                                <td key={f.key} className="px-3 py-3 text-slate-300">{log[f.key]}h</td>
+                              ))}
+                              <td className="px-3 py-3">
+                                <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium border ${STRESS_BADGE[log.predictedStressLevel] || ''}`}>
+                                  {log.predictedStressLevel}
+                                </span>
+                              </td>
+                              <td className="px-5 py-3 text-right whitespace-nowrap">
+                                <div className="flex items-center justify-end gap-1">
+                                  <button
+                                    onClick={(e) => handleEditStressLog(e, log)}
+                                    title="Edit in Stress Monitor"
+                                    className="p-1.5 rounded-lg hover:bg-indigo-500/10 text-slate-500 hover:text-indigo-400 transition-all"
+                                  >
+                                    <Edit2 className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={(e) => handleDeleteStressLog(e, log._id)}
+                                    title="Delete"
+                                    className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-500 hover:text-red-400 transition-all"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 )}
               </motion.div>
             )}
