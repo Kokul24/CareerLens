@@ -47,11 +47,11 @@ const STRESS_BADGE = {
 };
 
 const STRESS_FIELDS = [
-  { key: 'Study_Hours_Per_Day', label: 'Study', icon: '📚' },
-  { key: 'Extracurricular_Hours_Per_Day', label: 'Extra', icon: '🎭' },
-  { key: 'Sleep_Hours_Per_Day', label: 'Sleep', icon: '😴' },
-  { key: 'Social_Hours_Per_Day', label: 'Social', icon: '👥' },
-  { key: 'Physical_Activity_Hours_Per_Day', label: 'Physical', icon: '🏃' },
+  { key: 'Study_Hours_Per_Day', label: 'Study' },
+  { key: 'Extracurricular_Hours_Per_Day', label: 'Extra' },
+  { key: 'Sleep_Hours_Per_Day', label: 'Sleep' },
+  { key: 'Social_Hours_Per_Day', label: 'Social' },
+  { key: 'Physical_Activity_Hours_Per_Day', label: 'Physical' },
 ];
 
 // ─── helpers ────────────────────────────────────────────────────────────────
@@ -667,9 +667,9 @@ const History = () => {
                     className="pl-4 pr-8 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-slate-300 focus:outline-none focus:border-indigo-500/50 appearance-none cursor-pointer transition-all hover:bg-white/[0.06]"
                   >
                     <option value="">All Levels</option>
-                    <option value="Low">🟢 Low</option>
-                    <option value="Moderate">🟡 Moderate</option>
-                    <option value="High">🔴 High</option>
+                    <option value="Low">Low</option>
+                    <option value="Moderate">Moderate</option>
+                    <option value="High">High</option>
                   </select>
                 )}
               </div>
@@ -917,7 +917,7 @@ const History = () => {
                           <tr className="text-left text-slate-400 border-b border-white/10 bg-white/[0.02]">
                             <th className="px-5 py-3.5 font-medium">Date</th>
                             {STRESS_FIELDS.map((f) => (
-                              <th key={f.key} className="px-3 py-3.5 font-medium whitespace-nowrap">{f.icon} {f.label}</th>
+                              <th key={f.key} className="px-3 py-3.5 font-medium whitespace-nowrap">{f.label}</th>
                             ))}
                             <th className="px-3 py-3.5 font-medium">Stress</th>
                             <th className="px-5 py-3.5 font-medium text-right">Actions</th>
