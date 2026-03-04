@@ -38,7 +38,7 @@ import {
   Activity,
 } from 'lucide-react';
 
-const STRESS_API = 'http://localhost:5001/api/stress';
+const STRESS_API = '/api/stress';
 
 const STRESS_BADGE = {
   Low: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40',

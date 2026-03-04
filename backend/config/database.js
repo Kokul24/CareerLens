@@ -18,6 +18,7 @@ const connectDB = async () => {
   try {
     const conn = await mongoose.connect(process.env.MONGODB_URI, MONGO_OPTIONS);
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+    console.log('✅ MongoDB is connected to the backend');
 
     // Reconnect automatically on unexpected disconnection
     mongoose.connection.on('disconnected', () => {

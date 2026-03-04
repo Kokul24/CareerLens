@@ -16,7 +16,7 @@ import AnimatedBackground from '../AnimatedBackground';
 import Navbar from '../Navbar';
 import Footer from '../Footer';
 
-const API = 'http://localhost:5001/api/stress';
+const API = '/api/stress';
 
 const FIELDS = [
   { key: 'Study_Hours_Per_Day', label: 'Study Hours', max: 16 },

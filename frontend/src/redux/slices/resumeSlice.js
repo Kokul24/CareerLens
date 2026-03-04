@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5001';
+const API_BASE_URL = '/api';
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token');
@@ -13,7 +13,7 @@ export const analyzeResume = createAsyncThunk(
   'resume/analyzeResume',
   async (formData, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/resume/analyze`, formData, {
+      const response = await axios.post(`${API_BASE_URL}/resume/analyze`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           ...getAuthHeaders(),
@@ -30,7 +30,7 @@ export const getResumeHistory = createAsyncThunk(
   'resume/getHistory',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/resume/history`, { headers: getAuthHeaders() });
+      const response = await axios.get(`${API_BASE_URL}/resume/history`, { headers: getAuthHeaders() });
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch history');
@@ -43,7 +43,7 @@ export const getResumeById = createAsyncThunk(
   'resume/getResumeById',
   async (id, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/resume/${id}`, { headers: getAuthHeaders() });
+      const response = await axios.get(`${API_BASE_URL}/resume/${id}`, { headers: getAuthHeaders() });
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch resume');
@@ -56,7 +56,7 @@ export const updateResume = createAsyncThunk(
   'resume/updateResume',
   async ({ id, data }, { rejectWithValue }) => {
     try {
-      const response = await axios.put(`${API_BASE_URL}/api/resume/${id}`, data, { headers: getAuthHeaders() });
+      const response = await axios.put(`${API_BASE_URL}/resume/${id}`, data, { headers: getAuthHeaders() });
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to update resume');
@@ -69,7 +69,7 @@ export const deleteResume = createAsyncThunk(
   'resume/deleteResume',
   async (id, { rejectWithValue }) => {
     try {
-      const response = await axios.delete(`${API_BASE_URL}/api/resume/${id}`, { headers: getAuthHeaders() });
+      const response = await axios.delete(`${API_BASE_URL}/resume/${id}`, { headers: getAuthHeaders() });
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to delete resume');
