@@ -10,7 +10,6 @@ import CareerNavigator from './pages/CareerNavigator';
 import ResumeScorer from './pages/ResumeScorer';
 import History from './pages/History';
 import ProtectedRoute from './components/ProtectedRoute';
-import ActivitiesPage from './pages/ActivitiesPage';
 import StressMonitor from './components/Modules/StressMonitor';
 
 function App() {
@@ -41,11 +40,6 @@ function App() {
                 <Route path="/history" element={
                     <ProtectedRoute>
                         <History />
-                    </ProtectedRoute>
-                } />
-                <Route path="/activities" element={
-                    <ProtectedRoute>
-                        <ActivitiesPage />
                     </ProtectedRoute>
                 } />
                 <Route path="/stress-monitor" element={

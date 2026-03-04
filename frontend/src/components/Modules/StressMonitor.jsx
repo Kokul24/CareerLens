@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import {
@@ -12,17 +12,18 @@ import {
 } from 'recharts';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import AnimatedBackground from '../AnimatedBackground';
 import Navbar from '../Navbar';
 import Footer from '../Footer';
 
 const API = 'http://localhost:5001/api/stress';
 
 const FIELDS = [
-  { key: 'Study_Hours_Per_Day', label: 'Study Hours', icon: '📚', max: 16 },
-  { key: 'Extracurricular_Hours_Per_Day', label: 'Extracurricular Hours', icon: '🎭', max: 10 },
-  { key: 'Sleep_Hours_Per_Day', label: 'Sleep Hours', icon: '😴', max: 14 },
-  { key: 'Social_Hours_Per_Day', label: 'Social Hours', icon: '👥', max: 10 },
-  { key: 'Physical_Activity_Hours_Per_Day', label: 'Physical Activity Hours', icon: '🏃', max: 10 },
+  { key: 'Study_Hours_Per_Day', label: 'Study Hours', max: 16 },
+  { key: 'Extracurricular_Hours_Per_Day', label: 'Extracurricular Hours', max: 10 },
+  { key: 'Sleep_Hours_Per_Day', label: 'Sleep Hours', max: 14 },
+  { key: 'Social_Hours_Per_Day', label: 'Social Hours', max: 10 },
+  { key: 'Physical_Activity_Hours_Per_Day', label: 'Physical Activity Hours', max: 10 },
 ];
 
 const EMPTY_FORM = Object.fromEntries(FIELDS.map((f) => [f.key, '']));
@@ -37,6 +38,7 @@ export default function StressMonitor() {
   const location = useLocation();
   // ─── State ───
   const [form, setForm] = useState(EMPTY_FORM);
+  const [fieldErrors, setFieldErrors] = useState({});
   const [editingId, setEditingId] = useState(null);
   const [logs, setLogs] = useState([]);
   const [selectedLog, setSelectedLog] = useState(null);
@@ -51,7 +53,6 @@ export default function StressMonitor() {
       setEditingId(log._id);
       setForm(Object.fromEntries(FIELDS.map((f) => [f.key, log[f.key]?.toString() || ''])));
       setSelectedLog(log);
-      // Clear navigation state so refresh doesn't re-trigger
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
@@ -72,11 +73,39 @@ export default function StressMonitor() {
 
   useEffect(() => { fetchLogs(); }, []);
 
+  // ─── Computed total hours ───
+  const totalHours = useMemo(() => {
+    return FIELDS.reduce((sum, f) => {
+      const v = parseFloat(form[f.key]);
+      return sum + (isNaN(v) ? 0 : v);
+    }, 0);
+  }, [form]);
+
+  const totalExceeded = totalHours > 24;
+
+  // ─── Real-time field validation ───
+  const validateField = (key, value) => {
+    const num = parseFloat(value);
+    if (value === '') return null; // empty is handled by required
+    if (isNaN(num)) return 'Enter a valid number';
+    if (num < 0) return 'Cannot be negative';
+    if (num > 24) return 'Cannot exceed 24 hours';
+    if (!/^\d+(\.\d{1,1})?$/.test(value) && value !== '') return 'Max 1 decimal place';
+    return null;
+  };
+
   // ─── Form handlers ───
-  const onChange = (key, val) => setForm((p) => ({ ...p, [key]: val }));
+  const onChange = (key, val) => {
+    // Block non-numeric characters except . and empty
+    if (val !== '' && !/^\d*\.?\d*$/.test(val)) return;
+    setForm((p) => ({ ...p, [key]: val }));
+    const err = validateField(key, val);
+    setFieldErrors((p) => ({ ...p, [key]: err }));
+  };
 
   const resetForm = () => {
     setForm(EMPTY_FORM);
+    setFieldErrors({});
     setEditingId(null);
     setError('');
   };
@@ -84,17 +113,54 @@ export default function StressMonitor() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    // Build payload and validate every field
+    const payload = {};
+    const errors = {};
+    let hasError = false;
+
+    for (const f of FIELDS) {
+      const raw = form[f.key];
+      if (raw === '' || raw === undefined || raw === null) {
+        errors[f.key] = 'This field is required';
+        hasError = true;
+        continue;
+      }
+      const num = parseFloat(raw);
+      if (isNaN(num)) {
+        errors[f.key] = 'Enter a valid number';
+        hasError = true;
+      } else if (num < 0) {
+        errors[f.key] = 'Cannot be negative';
+        hasError = true;
+      } else if (num > 24) {
+        errors[f.key] = 'Cannot exceed 24 hours';
+        hasError = true;
+      } else {
+        payload[f.key] = Math.round(num * 10) / 10; // round to 1 decimal
+      }
+    }
+
+    if (hasError) {
+      setFieldErrors(errors);
+      setError('Please fix the highlighted errors above.');
+      return;
+    }
+
+    // Check total hours
+    const sum = Object.values(payload).reduce((a, b) => a + b, 0);
+    if (sum > 24) {
+      setError(`Total hours (${sum.toFixed(1)}h) exceed 24 hours in a day. Please adjust your values.`);
+      return;
+    }
+
+    if (sum === 0) {
+      setError('At least one activity must have hours greater than 0.');
+      return;
+    }
+
     setSubmitting(true);
     try {
-      const payload = Object.fromEntries(
-        FIELDS.map((f) => [f.key, parseFloat(form[f.key])])
-      );
-      if (FIELDS.some((f) => isNaN(payload[f.key]) || payload[f.key] < 0)) {
-        setError('Please fill all fields with valid positive numbers.');
-        setSubmitting(false);
-        return;
-      }
-
       let res;
       if (editingId) {
         res = await axios.put(`${API}/log/${editingId}`, payload);
@@ -128,15 +194,187 @@ export default function StressMonitor() {
       setError(err.response?.data?.message || 'Delete failed');
     }
   };
+
+  // ─── Professional PDF Report ───
   const downloadPDF = async () => {
-    const el = document.getElementById('stress-report-container');
-    if (!el) return;
-    const canvas = await html2canvas(el, { backgroundColor: '#0f172a', scale: 2 });
-    const imgData = canvas.toDataURL('image/png');
+    if (!selectedLog) return;
     const pdf = new jsPDF('p', 'mm', 'a4');
-    const w = pdf.internal.pageSize.getWidth();
-    const h = (canvas.height * w) / canvas.width;
-    pdf.addImage(imgData, 'PNG', 0, 0, w, h);
+    const W = pdf.internal.pageSize.getWidth();
+    const margin = 15;
+    let y = 15;
+
+    // ── Helper: horizontal line ──
+    const drawLine = (yPos, color = [100, 116, 139]) => {
+      pdf.setDrawColor(...color);
+      pdf.setLineWidth(0.3);
+      pdf.line(margin, yPos, W - margin, yPos);
+    };
+
+    // ══ HEADER ══
+    pdf.setFillColor(15, 23, 42);
+    pdf.rect(0, 0, W, 45, 'F');
+    pdf.setFillColor(99, 102, 241);
+    pdf.rect(0, 45, W, 1.5, 'F');
+
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(22);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('CareerLens', margin, 20);
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(148, 163, 184);
+    pdf.text('Student Well-being & Stress Monitor — AI Report', margin, 28);
+    pdf.setFontSize(9);
+    pdf.text(`Generated: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`, margin, 36);
+
+    // ── Stress level badge (right side of header) ──
+    const level = selectedLog.predictedStressLevel;
+    const badgeColors = { Low: [16, 185, 129], Moderate: [245, 158, 11], High: [239, 68, 68] };
+    const badgeBg = { Low: [6, 78, 59], Moderate: [120, 53, 15], High: [127, 29, 29] };
+    const bc = badgeBg[level] || [50, 50, 50];
+    const tc = badgeColors[level] || [200, 200, 200];
+    const badgeText = `Stress Level: ${level}`;
+    const badgeW = pdf.getTextWidth(badgeText) + 16;
+    pdf.setFillColor(...bc);
+    pdf.roundedRect(W - margin - badgeW, 14, badgeW, 10, 2, 2, 'F');
+    pdf.setTextColor(...tc);
+    pdf.setFontSize(11);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(badgeText, W - margin - badgeW + 8, 21);
+
+    y = 55;
+
+    // ══ LOGGED DATE ══
+    pdf.setTextColor(30, 41, 59);
+    pdf.setFontSize(11);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Log Date:', margin, y);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(71, 85, 105);
+    pdf.text(
+      new Date(selectedLog.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+      margin + 25, y
+    );
+    y += 10;
+    drawLine(y);
+    y += 8;
+
+    // ══ DAILY ACTIVITY BREAKDOWN TABLE ══
+    pdf.setTextColor(15, 23, 42);
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Daily Activity Breakdown', margin, y);
+    y += 8;
+
+    // Table header
+    const colW = (W - 2 * margin) / 3;
+    pdf.setFillColor(241, 245, 249);
+    pdf.rect(margin, y, W - 2 * margin, 9, 'F');
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(51, 65, 85);
+    pdf.text('Activity', margin + 4, y + 6);
+    pdf.text('Hours', margin + colW + 4, y + 6);
+    pdf.text('% of Day', margin + colW * 2 + 4, y + 6);
+    y += 9;
+
+    // Table rows
+    const totalLogged = FIELDS.reduce((s, f) => s + (selectedLog[f.key] || 0), 0);
+    FIELDS.forEach((f, i) => {
+      const val = selectedLog[f.key] || 0;
+      const pct = ((val / 24) * 100).toFixed(1);
+      if (i % 2 === 0) {
+        pdf.setFillColor(248, 250, 252);
+        pdf.rect(margin, y, W - 2 * margin, 8, 'F');
+      }
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(9);
+      pdf.setTextColor(30, 41, 59);
+      pdf.text(f.label, margin + 4, y + 5.5);
+      pdf.setTextColor(71, 85, 105);
+      pdf.text(`${val}h`, margin + colW + 4, y + 5.5);
+      // Mini progress bar
+      const barX = margin + colW * 2 + 4;
+      const barMaxW = colW - 30;
+      pdf.setFillColor(226, 232, 240);
+      pdf.roundedRect(barX, y + 2, barMaxW, 4, 1, 1, 'F');
+      const fillColor = val > 10 ? [239, 68, 68] : val > 6 ? [245, 158, 11] : [16, 185, 129];
+      pdf.setFillColor(...fillColor);
+      pdf.roundedRect(barX, y + 2, Math.max(1, (val / 24) * barMaxW), 4, 1, 1, 'F');
+      pdf.setTextColor(100, 116, 139);
+      pdf.text(`${pct}%`, barX + barMaxW + 3, y + 5.5);
+      y += 8;
+    });
+
+    // Total row
+    pdf.setFillColor(241, 245, 249);
+    pdf.rect(margin, y, W - 2 * margin, 9, 'F');
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(9);
+    pdf.setTextColor(15, 23, 42);
+    pdf.text('Total Logged', margin + 4, y + 6);
+    pdf.text(`${totalLogged.toFixed(1)}h / 24h`, margin + colW + 4, y + 6);
+    pdf.text(`${((totalLogged / 24) * 100).toFixed(1)}%`, margin + colW * 2 + 4, y + 6);
+    y += 14;
+    drawLine(y);
+    y += 8;
+
+    // ══ RADAR CHART IMAGE ══
+    const chartEl = document.querySelector('#stress-report-container .recharts-wrapper');
+    if (chartEl) {
+      try {
+        pdf.setTextColor(15, 23, 42);
+        pdf.setFontSize(14);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Work / Life Balance Radar', margin, y);
+        y += 4;
+        const chartCanvas = await html2canvas(chartEl, { backgroundColor: '#ffffff', scale: 2 });
+        const chartImg = chartCanvas.toDataURL('image/png');
+        const chartW = W - 2 * margin - 20;
+        const chartH = (chartCanvas.height * chartW) / chartCanvas.width;
+        pdf.addImage(chartImg, 'PNG', margin + 10, y, chartW, chartH);
+        y += chartH + 8;
+      } catch (e) {
+        console.warn('Could not capture radar chart', e);
+      }
+    }
+
+    // ══ AI SUGGESTIONS ══
+    if (y > 240) { pdf.addPage(); y = 20; }
+    drawLine(y);
+    y += 8;
+    pdf.setTextColor(15, 23, 42);
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('AI-Powered Suggestions', margin, y);
+    y += 7;
+
+    const suggestions = selectedLog.suggestions?.split('. ').filter(Boolean) || [];
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'normal');
+    suggestions.forEach((tip, i) => {
+      if (y > 270) { pdf.addPage(); y = 20; }
+      const text = tip.endsWith('.') ? tip : `${tip}.`;
+      // Bullet point
+      pdf.setFillColor(99, 102, 241);
+      pdf.circle(margin + 2.5, y - 1, 1.2, 'F');
+      pdf.setTextColor(51, 65, 85);
+      const lines = pdf.splitTextToSize(text, W - 2 * margin - 10);
+      pdf.text(lines, margin + 7, y);
+      y += lines.length * 4.5 + 3;
+    });
+
+    // ══ FOOTER ══
+    y += 5;
+    if (y > 270) { pdf.addPage(); y = 20; }
+    drawLine(y, [203, 213, 225]);
+    y += 6;
+    pdf.setFontSize(8);
+    pdf.setTextColor(148, 163, 184);
+    pdf.text('CareerLens — Student Well-being & Stress Monitor', margin, y);
+    pdf.text('This report was generated using ML-powered analysis. For informational purposes only.', margin, y + 4);
+    pdf.text(`Page 1 of ${pdf.getNumberOfPages()}`, W - margin - 20, y);
+
     pdf.save(`stress-report-${new Date().toISOString().slice(0, 10)}.pdf`);
   };
 
@@ -153,14 +391,16 @@ export default function StressMonitor() {
   // RENDER
   // ────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-900 to-gray-950 text-white">
+    <div className="relative min-h-screen flex flex-col text-white">
+      <AnimatedBackground />
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-24 pb-16">
+      <div className="relative z-10 pt-24 pb-16 px-4 sm:px-6 lg:px-8 flex-grow">
+        <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
           <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-sm font-medium mb-4">
-            🧠 ML-Powered Analysis
+            ML-Powered Analysis
           </span>
           <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">
             Student Well-being &amp; Stress Monitor
@@ -175,7 +415,7 @@ export default function StressMonitor() {
         ═══════════════════════════════════════════ */}
         <section className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 md:p-8 mb-10">
           <h2 className="text-xl font-semibold mb-1 flex items-center gap-2">
-            {editingId ? '✏️ Update Daily Log' : '📝 New Daily Log'}
+            {editingId ? 'Update Daily Log' : 'New Daily Log'}
           </h2>
           <p className="text-gray-400 text-sm mb-6">
             {editingId
@@ -184,40 +424,75 @@ export default function StressMonitor() {
           </p>
 
           {error && (
-            <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
-              ⚠️ {error}
+            <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm flex items-start gap-2">
+              <span>{error}</span>
             </div>
           )}
 
           <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-              {FIELDS.map((f) => (
-                <div key={f.key}>
-                  <label className="block text-sm text-gray-300 mb-1">
-                    {f.icon} {f.label}
-                  </label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="24"
-                    placeholder="0"
-                    value={form[f.key]}
-                    onChange={(e) => onChange(f.key, e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
-                    required
-                  />
-                </div>
-              ))}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
+              {FIELDS.map((f) => {
+                const hasErr = !!fieldErrors[f.key];
+                return (
+                  <div key={f.key}>
+                    <label className="block text-sm text-gray-300 mb-1">
+                      {f.label}
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="0"
+                      value={form[f.key]}
+                      onChange={(e) => onChange(f.key, e.target.value)}
+                      onBlur={() => {
+                        if (form[f.key] === '') setFieldErrors((p) => ({ ...p, [f.key]: 'This field is required' }));
+                      }}
+                      className={`w-full px-4 py-2.5 rounded-lg bg-white/5 border text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-all ${
+                        hasErr
+                          ? 'border-red-500/60 focus:ring-red-500/50 focus:border-red-500/50'
+                          : 'border-white/10 focus:ring-purple-500/50 focus:border-purple-500/50'
+                      }`}
+                    />
+                    {hasErr && (
+                      <p className="mt-1 text-xs text-red-400">{fieldErrors[f.key]}</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Real-time total hours indicator */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs text-gray-400">Total Hours Logged</span>
+                <span className={`text-xs font-semibold ${
+                  totalExceeded ? 'text-red-400' : totalHours > 20 ? 'text-amber-400' : 'text-emerald-400'
+                }`}>
+                  {totalHours.toFixed(1)}h / 24h
+                  {totalExceeded && ' — exceeds 24 hours!'}
+                </span>
+              </div>
+              <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-300 ${
+                    totalExceeded
+                      ? 'bg-gradient-to-r from-red-500 to-red-400'
+                      : totalHours > 20
+                      ? 'bg-gradient-to-r from-amber-500 to-amber-400'
+                      : 'bg-gradient-to-r from-emerald-500 to-cyan-400'
+                  }`}
+                  style={{ width: `${Math.min((totalHours / 24) * 100, 100)}%` }}
+                />
+              </div>
             </div>
 
             <div className="flex gap-3">
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={submitting || totalExceeded}
                 className="px-8 py-2.5 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {submitting ? '⏳ Predicting…' : editingId ? '💾 Update & Re-predict' : '🔮 Predict Stress Level'}
+                {submitting ? 'Predicting...' : editingId ? 'Update & Re-predict' : 'Predict Stress Level'}
               </button>
               {editingId && (
                 <button
@@ -240,7 +515,7 @@ export default function StressMonitor() {
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
               <div>
                 <h2 className="text-xl font-semibold flex items-center gap-2">
-                  📊 AI Stress Insights
+                  AI Stress Insights
                 </h2>
                 <p className="text-gray-400 text-sm mt-1">
                   Logged on {new Date(selectedLog.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
@@ -249,9 +524,6 @@ export default function StressMonitor() {
 
               {/* Stress Badge */}
               <div className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border text-lg font-bold ${STRESS_BADGE[selectedLog.predictedStressLevel] || ''}`}>
-                {selectedLog.predictedStressLevel === 'Low' && '😊'}
-                {selectedLog.predictedStressLevel === 'Moderate' && '😐'}
-                {selectedLog.predictedStressLevel === 'High' && '😰'}
                 Stress Level: {selectedLog.predictedStressLevel}
               </div>
             </div>
@@ -283,7 +555,7 @@ export default function StressMonitor() {
               {/* Suggestions */}
               <div className="flex flex-col gap-4">
                 <div className="bg-white/5 rounded-xl p-5 border border-white/10 flex-1">
-                  <h3 className="text-sm font-medium text-gray-400 mb-3">💡 Actionable Suggestions</h3>
+                  <h3 className="text-sm font-medium text-gray-400 mb-3">Actionable Suggestions</h3>
                   <div className="space-y-3">
                     {selectedLog.suggestions?.split('. ').filter(Boolean).map((tip, i) => (
                       <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-white/5">
@@ -298,9 +570,8 @@ export default function StressMonitor() {
                 <div className="grid grid-cols-5 gap-2">
                   {FIELDS.map((f) => (
                     <div key={f.key} className="bg-white/5 rounded-lg p-2 border border-white/10 text-center">
-                      <div className="text-lg">{f.icon}</div>
                       <div className="text-white font-bold text-sm">{selectedLog[f.key]}h</div>
-                      <div className="text-[10px] text-gray-500 leading-tight mt-0.5">{f.label.split(' ')[0]}</div>
+                      <div className="text-[10px] text-gray-500 leading-tight mt-0.5">{f.label.replace(' Hours', '')}</div>
                     </div>
                   ))}
                 </div>
@@ -316,10 +587,11 @@ export default function StressMonitor() {
               onClick={downloadPDF}
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 font-medium transition-all shadow-lg shadow-cyan-500/20"
             >
-              📄 Download AI Insights (PDF)
+              Download AI Insights (PDF)
             </button>
           </div>
         )}
+        </div>
       </div>
 
       <Footer />
