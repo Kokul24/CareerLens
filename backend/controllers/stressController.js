@@ -11,11 +11,18 @@ const FEATURE_KEYS = [
 
 // ─── Helper: extract feature array from body ───
 function extractFeatures(body) {
-  return FEATURE_KEYS.map((k) => {
+  const values = [];
+  for (const k of FEATURE_KEYS) {
     const val = parseFloat(body[k]);
     if (isNaN(val)) throw new Error(`Invalid or missing value for ${k}`);
-    return val;
-  });
+    if (val < 0) throw new Error(`${k} cannot be negative`);
+    if (val > 24) throw new Error(`${k} cannot exceed 24 hours`);
+    values.push(Math.round(val * 10) / 10);
+  }
+  const total = values.reduce((a, b) => a + b, 0);
+  if (total > 24) throw new Error(`Total hours (${total.toFixed(1)}h) exceed 24 hours in a day`);
+  if (total === 0) throw new Error('At least one activity must have hours greater than 0');
+  return values;
 }
 
 // ─── CREATE  POST /api/stress/log ───
