@@ -6,7 +6,9 @@ import careerRoutes from './routes/careerRoutes.js';
 import resumeRoutes from './routes/resumeRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import stressRoutes from './routes/stressRoutes.js';
+import placementRoutes from './routes/placementRoutes.js';
 import { warmupStressModel } from './services/stressMlService.js';
+import { warmupPlacementModel } from './services/placementMlService.js';
 
 // Load environment variables
 dotenv.config();
@@ -32,6 +34,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/career', careerRoutes);
 app.use('/api/resume', resumeRoutes);
 app.use('/api/stress', stressRoutes);
+app.use('/api/placement', placementRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {
@@ -55,4 +58,5 @@ app.listen(PORT, () => {
   if (process.env.STRESS_MODEL_WARMUP === 'true') {
     setImmediate(() => warmupStressModel());
   }
+  setImmediate(() => warmupPlacementModel());
 });

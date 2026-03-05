@@ -14,6 +14,7 @@ import {
   FileText,
   History,
   ChevronDown,
+  GraduationCap,
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -48,6 +49,8 @@ const Navbar = () => {
         { to: '/resume-scorer', label: 'Resume Scorer', icon: FileText },
         { to: '/history', label: 'History', icon: History },
         { to: '/stress-monitor', label: 'Stress Monitor', icon: Compass },
+        { to: '/placement-predictor', label: 'Placement Predictor', icon: GraduationCap },
+        { to: '/placement-history', label: 'Placement History', icon: History },
       ]
     : [
         { to: '/#features', label: 'Features', icon: null },
