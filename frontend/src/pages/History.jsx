@@ -36,9 +36,11 @@ import {
   Search,
   SlidersHorizontal,
   Activity,
+  GraduationCap,
 } from 'lucide-react';
 
 const STRESS_API = '/api/stress';
+const PLACEMENT_API = '/api/placement';
 
 const STRESS_BADGE = {
   Low: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40',
@@ -52,6 +54,27 @@ const STRESS_FIELDS = [
   { key: 'Sleep_Hours_Per_Day', label: 'Sleep' },
   { key: 'Social_Hours_Per_Day', label: 'Social' },
   { key: 'Physical_Activity_Hours_Per_Day', label: 'Physical' },
+];
+
+const BRANCH_MAP = {
+  1: 'CSE',
+  2: 'Civil',
+  3: 'ECE',
+  4: 'EEE',
+  5: 'IT',
+  6: 'Mechanical',
+};
+
+const PLACEMENT_FIELDS = [
+  { key: 'branch', label: 'Branch' },
+  { key: 'cgpa', label: 'CGPA' },
+  { key: 'internship_count', label: 'Internship' },
+  { key: 'project_count', label: 'Projects' },
+  { key: 'certifications_count', label: 'Certs' },
+  { key: 'coding_skills_score', label: 'Coding' },
+  { key: 'communication_skills_score', label: 'Comm' },
+  { key: 'soft_skills_score', label: 'Soft' },
+  { key: 'hackathon_participation', label: 'Hackathon' },
 ];
 
 // ─── helpers ────────────────────────────────────────────────────────────────
@@ -400,7 +423,9 @@ const History = () => {
   const [resumeSort, setResumeSort] = useState('newest');
   const [roadmapSort, setRoadmapSort] = useState('newest');
   const [stressSort, setStressSort] = useState('newest');
+  const [placementSort, setPlacementSort] = useState('newest');
   const [stressFilterLevel, setStressFilterLevel] = useState('');
+  const [placementFilterBranch, setPlacementFilterBranch] = useState('');
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { roadmaps, loading: roadmapLoading } = useSelector((state) => state.career);
@@ -409,6 +434,12 @@ const History = () => {
   // ── Stress logs state ──
   const [stressLogs, setStressLogs] = useState([]);
   const [stressLoading, setStressLoading] = useState(false);
+
+  // ── Placement logs state ──
+  const [placementLogs, setPlacementLogs] = useState([]);
+  const [placementLoading, setPlacementLoading] = useState(false);
+  const [editingPlacement, setEditingPlacement] = useState(null);
+  const [placementForm, setPlacementForm] = useState({});
 
   const fetchStressLogs = useCallback(async () => {
     setStressLoading(true);
@@ -422,11 +453,24 @@ const History = () => {
     }
   }, []);
 
+  const fetchPlacementLogs = useCallback(async () => {
+    setPlacementLoading(true);
+    try {
+      const { data } = await axios.get(`${PLACEMENT_API}/predictions`);
+      setPlacementLogs(data.data || []);
+    } catch (e) {
+      console.error('Failed to fetch placement logs', e);
+    } finally {
+      setPlacementLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     dispatch(getAllRoadmaps());
     dispatch(getResumeHistory());
     fetchStressLogs();
-  }, [dispatch, fetchStressLogs]);
+    fetchPlacementLogs();
+  }, [dispatch, fetchStressLogs, fetchPlacementLogs]);
 
   const handleDeleteStressLog = async (e, id) => {
     e.stopPropagation();
@@ -442,6 +486,57 @@ const History = () => {
   const handleEditStressLog = (e, log) => {
     e.stopPropagation();
     navigate('/stress-monitor', { state: { editLog: log } });
+  };
+
+  const handleDeletePlacementLog = async (e, id) => {
+    e.stopPropagation();
+    if (!window.confirm('Delete this placement log?')) return;
+    try {
+      await axios.delete(`${PLACEMENT_API}/prediction/${id}`);
+      await fetchPlacementLogs();
+    } catch (err) {
+      console.error('Delete placement log failed', err);
+    }
+  };
+
+  const handleEditPlacementLog = (e, log) => {
+    e.stopPropagation();
+    setEditingPlacement(log);
+    setPlacementForm({
+      branch: String(log.branch ?? ''),
+      cgpa: String(log.cgpa ?? ''),
+      internship_count: String(log.internship_count ?? ''),
+      project_count: String(log.project_count ?? ''),
+      certifications_count: String(log.certifications_count ?? ''),
+      coding_skills_score: String(log.coding_skills_score ?? ''),
+      communication_skills_score: String(log.communication_skills_score ?? ''),
+      soft_skills_score: String(log.soft_skills_score ?? ''),
+      hackathon_participation: String(log.hackathon_participation ?? ''),
+    });
+  };
+
+  const handleUpdatePlacementLog = async () => {
+    if (!editingPlacement?._id) return;
+    const payload = {
+      branch: parseFloat(placementForm.branch),
+      cgpa: parseFloat(placementForm.cgpa),
+      internship_count: parseFloat(placementForm.internship_count),
+      project_count: parseFloat(placementForm.project_count),
+      certifications_count: parseFloat(placementForm.certifications_count),
+      coding_skills_score: parseFloat(placementForm.coding_skills_score),
+      communication_skills_score: parseFloat(placementForm.communication_skills_score),
+      soft_skills_score: parseFloat(placementForm.soft_skills_score),
+      hackathon_participation: parseFloat(placementForm.hackathon_participation),
+    };
+
+    try {
+      await axios.put(`${PLACEMENT_API}/prediction/${editingPlacement._id}`, payload);
+      setEditingPlacement(null);
+      setPlacementForm({});
+      await fetchPlacementLogs();
+    } catch (err) {
+      console.error('Update placement log failed', err);
+    }
   };
 
   const handleDeleteRoadmap = (e, id) => {
@@ -479,7 +574,13 @@ const History = () => {
     });
   };
 
-  const loading = tab === 'resumes' ? resumeLoading : tab === 'roadmaps' ? roadmapLoading : stressLoading;
+  const loading = tab === 'resumes'
+    ? resumeLoading
+    : tab === 'roadmaps'
+    ? roadmapLoading
+    : tab === 'stress'
+    ? stressLoading
+    : placementLoading;
 
   // ── filtered + sorted lists ──────────────────────────────────────────────
   const q = searchQuery.trim().toLowerCase();
@@ -537,6 +638,24 @@ const History = () => {
       return 0;
     });
 
+  const filteredPlacementLogs = (placementLogs || [])
+    .filter((log) => {
+      const matchBranch = placementFilterBranch ? String(log.branch) === placementFilterBranch : true;
+      const matchSearch = q
+        ? new Date(log.createdAt || log.updatedAt).toLocaleDateString().toLowerCase().includes(q) ||
+          BRANCH_MAP[log.branch]?.toLowerCase().includes(q) ||
+          String(log.placement_probability ?? '').includes(q)
+        : true;
+      return matchBranch && matchSearch;
+    })
+    .sort((a, b) => {
+      if (placementSort === 'newest') return new Date(b.createdAt) - new Date(a.createdAt);
+      if (placementSort === 'oldest') return new Date(a.createdAt) - new Date(b.createdAt);
+      if (placementSort === 'probability-desc') return (b.placement_probability || 0) - (a.placement_probability || 0);
+      if (placementSort === 'probability-asc') return (a.placement_probability || 0) - (b.placement_probability || 0);
+      return 0;
+    });
+
   return (
     <div className="relative min-h-screen flex flex-col">
       <AnimatedBackground />
@@ -567,6 +686,7 @@ const History = () => {
                 { key: 'resumes', label: 'Resume Analyses', icon: FileText, count: history?.length },
                 { key: 'roadmaps', label: 'Career Roadmaps', icon: Compass, count: roadmaps?.length },
                 { key: 'stress', label: 'Stress Logs', icon: Activity, count: stressLogs?.length },
+                { key: 'placements', label: 'Placement Logs', icon: GraduationCap, count: placementLogs?.length },
               ].map((t) => (
                 <motion.button
                   key={t.key}
@@ -606,7 +726,9 @@ const History = () => {
                       ? 'Search by role or filename…'
                       : tab === 'roadmaps'
                       ? 'Search by role or skill…'
-                      : 'Search by date or stress level…'
+                      : tab === 'stress'
+                      ? 'Search by date or stress level…'
+                      : 'Search by date, branch or probability…'
                   }
                   className="w-full pl-9 pr-9 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 focus:bg-white/[0.06] transition-all"
                 />
@@ -624,13 +746,23 @@ const History = () => {
               <div className="relative">
                 <SlidersHorizontal className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500 pointer-events-none" />
                 <select
-                  value={tab === 'resumes' ? resumeSort : tab === 'roadmaps' ? roadmapSort : stressSort}
+                  value={
+                    tab === 'resumes'
+                      ? resumeSort
+                      : tab === 'roadmaps'
+                      ? roadmapSort
+                      : tab === 'stress'
+                      ? stressSort
+                      : placementSort
+                  }
                   onChange={(e) =>
                     tab === 'resumes'
                       ? setResumeSort(e.target.value)
                       : tab === 'roadmaps'
                       ? setRoadmapSort(e.target.value)
-                      : setStressSort(e.target.value)
+                      : tab === 'stress'
+                      ? setStressSort(e.target.value)
+                      : setPlacementSort(e.target.value)
                   }
                   className="pl-8 pr-8 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-slate-300 focus:outline-none focus:border-indigo-500/50 appearance-none cursor-pointer transition-all hover:bg-white/[0.06]"
                 >
@@ -650,12 +782,21 @@ const History = () => {
                       <option value="az">A → Z</option>
                     </>
                   ) : (
+                    tab === 'stress' ? (
                     <>
                       <option value="newest">Newest first</option>
                       <option value="oldest">Oldest first</option>
                       <option value="level-desc">Stress: High → Low</option>
                       <option value="level-asc">Stress: Low → High</option>
                     </>
+                    ) : (
+                    <>
+                      <option value="newest">Newest first</option>
+                      <option value="oldest">Oldest first</option>
+                      <option value="probability-desc">Probability: High → Low</option>
+                      <option value="probability-asc">Probability: Low → High</option>
+                    </>
+                    )
                   )}
                 </select>
 
@@ -672,6 +813,20 @@ const History = () => {
                     <option value="High">High</option>
                   </select>
                 )}
+
+                {/* Branch filter (only on placement tab) */}
+                {tab === 'placements' && (
+                  <select
+                    value={placementFilterBranch}
+                    onChange={(e) => setPlacementFilterBranch(e.target.value)}
+                    className="pl-4 pr-8 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-slate-300 focus:outline-none focus:border-indigo-500/50 appearance-none cursor-pointer transition-all hover:bg-white/[0.06]"
+                  >
+                    <option value="">All Branches</option>
+                    {Object.entries(BRANCH_MAP).map(([value, label]) => (
+                      <option key={value} value={value}>{label}</option>
+                    ))}
+                  </select>
+                )}
               </div>
             </div>
 
@@ -682,7 +837,9 @@ const History = () => {
                   ? `${filteredResumes.length} of ${history?.length || 0} results`
                   : tab === 'roadmaps'
                   ? `${filteredRoadmaps.length} of ${roadmaps?.length || 0} results`
-                  : `${filteredStressLogs.length} of ${stressLogs?.length || 0} results`}
+                  : tab === 'stress'
+                  ? `${filteredStressLogs.length} of ${stressLogs?.length || 0} results`
+                  : `${filteredPlacementLogs.length} of ${placementLogs?.length || 0} results`}
               </p>
             )}
           </div>
@@ -967,6 +1124,99 @@ const History = () => {
                 )}
               </motion.div>
             )}
+
+            {/* Placement Logs */}
+            {tab === 'placements' && !loading && (
+              <motion.div
+                key="placements"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                {placementLogs?.length === 0 ? (
+                  <div className="glass-card p-12 text-center">
+                    <GraduationCap className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+                    <p className="text-slate-400 mb-2">No placement logs yet</p>
+                    <Link to="/placement-predictor" className="text-sm text-indigo-400 hover:text-indigo-300">
+                      Predict your first placement probability →
+                    </Link>
+                  </div>
+                ) : filteredPlacementLogs.length === 0 ? (
+                  <div className="glass-card p-12 text-center">
+                    <Search className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+                    <p className="text-slate-400 mb-1">No results for &ldquo;{searchQuery}&rdquo;</p>
+                    <button onClick={() => setSearchQuery('')} className="text-sm text-indigo-400 hover:text-indigo-300">Clear search</button>
+                  </div>
+                ) : (
+                  <div className="glass-card p-0 overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="text-left text-slate-400 border-b border-white/10 bg-white/[0.02]">
+                            <th className="px-5 py-3.5 font-medium whitespace-nowrap">Date</th>
+                            <th className="px-3 py-3.5 font-medium whitespace-nowrap">Branch</th>
+                            <th className="px-3 py-3.5 font-medium whitespace-nowrap">CGPA</th>
+                            <th className="px-3 py-3.5 font-medium whitespace-nowrap">Coding</th>
+                            <th className="px-3 py-3.5 font-medium whitespace-nowrap">Comm</th>
+                            <th className="px-3 py-3.5 font-medium whitespace-nowrap">Internships</th>
+                            <th className="px-3 py-3.5 font-medium whitespace-nowrap">Projects</th>
+                            <th className="px-3 py-3.5 font-medium whitespace-nowrap">Probability</th>
+                            <th className="px-5 py-3.5 font-medium text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredPlacementLogs.map((log) => (
+                            <tr
+                              key={log._id}
+                              className="border-b border-white/[0.04] hover:bg-white/[0.03] transition-colors"
+                            >
+                              <td className="px-5 py-3 whitespace-nowrap text-white">
+                                {new Date(log.createdAt || log.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                              </td>
+                              <td className="px-3 py-3 text-slate-300">{BRANCH_MAP[log.branch] || log.branch}</td>
+                              <td className="px-3 py-3 text-slate-300">{log.cgpa}</td>
+                              <td className="px-3 py-3 text-slate-300">{log.coding_skills_score}</td>
+                              <td className="px-3 py-3 text-slate-300">{log.communication_skills_score}</td>
+                              <td className="px-3 py-3 text-slate-300">{log.internship_count}</td>
+                              <td className="px-3 py-3 text-slate-300">{log.project_count}</td>
+                              <td className="px-3 py-3">
+                                <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium border ${
+                                  log.placement_probability >= 70
+                                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+                                    : log.placement_probability >= 40
+                                    ? 'bg-amber-500/20 text-amber-400 border-amber-500/40'
+                                    : 'bg-red-500/20 text-red-400 border-red-500/40'
+                                }`}>
+                                  {log.placement_probability}%
+                                </span>
+                              </td>
+                              <td className="px-5 py-3 text-right whitespace-nowrap">
+                                <div className="flex items-center justify-end gap-1">
+                                  <button
+                                    onClick={(e) => handleEditPlacementLog(e, log)}
+                                    title="Edit"
+                                    className="p-1.5 rounded-lg hover:bg-indigo-500/10 text-slate-500 hover:text-indigo-400 transition-all"
+                                  >
+                                    <Edit2 className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={(e) => handleDeletePlacementLog(e, log._id)}
+                                    title="Delete"
+                                    className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-500 hover:text-red-400 transition-all"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            )}
           </AnimatePresence>
         </div>
       </div>
@@ -1074,6 +1324,93 @@ const History = () => {
             onClose={() => setUpdateItem(null)}
             onSuccess={handleUpdateSuccess}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Placement Edit Modal */}
+      <AnimatePresence>
+        {editingPlacement && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setEditingPlacement(null)}
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto glass-card border border-white/10 shadow-2xl rounded-2xl bg-[#0f172a]"
+            >
+              <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
+                <h2 className="text-base font-bold text-white flex items-center gap-2">
+                  <GraduationCap className="w-4 h-4 text-indigo-400" />
+                  Update Placement Log
+                </h2>
+                <button
+                  onClick={() => setEditingPlacement(null)}
+                  className="p-1.5 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {PLACEMENT_FIELDS.map((field) => (
+                  <div key={field.key}>
+                    <label className="block text-xs font-medium text-slate-400 mb-1.5">{field.label}</label>
+                    {field.key === 'branch' ? (
+                      <select
+                        value={placementForm[field.key] ?? ''}
+                        onChange={(e) => setPlacementForm((p) => ({ ...p, [field.key]: e.target.value }))}
+                        className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white text-sm focus:outline-none focus:border-indigo-500/50"
+                      >
+                        {Object.entries(BRANCH_MAP).map(([value, label]) => (
+                          <option key={value} value={value}>{label}</option>
+                        ))}
+                      </select>
+                    ) : field.key === 'hackathon_participation' ? (
+                      <select
+                        value={placementForm[field.key] ?? ''}
+                        onChange={(e) => setPlacementForm((p) => ({ ...p, [field.key]: e.target.value }))}
+                        className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white text-sm focus:outline-none focus:border-indigo-500/50"
+                      >
+                        <option value="1">Yes</option>
+                        <option value="0">No</option>
+                      </select>
+                    ) : (
+                      <input
+                        type="number"
+                        value={placementForm[field.key] ?? ''}
+                        onChange={(e) => setPlacementForm((p) => ({ ...p, [field.key]: e.target.value }))}
+                        className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white text-sm focus:outline-none focus:border-indigo-500/50"
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div className="px-6 pb-6 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingPlacement(null)}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.07] text-slate-300 text-sm font-medium transition-all border border-white/[0.06]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleUpdatePlacementLog}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white text-sm font-semibold transition-all"
+                >
+                  Update & Re-predict
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
