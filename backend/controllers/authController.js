@@ -12,6 +12,20 @@ const generateToken = (id) => {
   });
 };
 
+const redirectOAuthSuccess = (res, user) => {
+  const token = generateToken(user._id);
+  const frontendURL = process.env.FRONTEND_URL || 'http://localhost:3000';
+  const userData = encodeURIComponent(JSON.stringify({
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    avatar: user.avatar || '',
+    authProvider: user.authProvider || 'local',
+  }));
+
+  return res.redirect(`${frontendURL}/oauth/callback?token=${token}&user=${userData}`);
+};
+
 // @desc    Register new user
 // @route   POST /api/auth/register
 // @access  Public
@@ -157,22 +171,23 @@ export const logout = async (req, res) => {
 // @access  Public
 export const googleCallback = async (req, res) => {
   try {
-    const user = req.user;
-    const token = generateToken(user._id);
-
-    // Redirect to frontend with token and user info in query params
-    const frontendURL = process.env.FRONTEND_URL || 'http://localhost:3000';
-    const userData = encodeURIComponent(JSON.stringify({
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      avatar: user.avatar || '',
-    }));
-
-    res.redirect(`${frontendURL}/oauth/callback?token=${token}&user=${userData}`);
+    return redirectOAuthSuccess(res, req.user);
   } catch (error) {
     console.error('Google callback error:', error);
     const frontendURL = process.env.FRONTEND_URL || 'http://localhost:3000';
-    res.redirect(`${frontendURL}/?error=oauth_failed`);
+    res.redirect(`${frontendURL}/oauth/callback?error=oauth_failed`);
+  }
+};
+
+// @desc    GitHub OAuth callback
+// @route   GET /api/auth/github/callback
+// @access  Public
+export const githubCallback = async (req, res) => {
+  try {
+    return redirectOAuthSuccess(res, req.user);
+  } catch (error) {
+    console.error('GitHub callback error:', error);
+    const frontendURL = process.env.FRONTEND_URL || 'http://localhost:3000';
+    res.redirect(`${frontendURL}/oauth/callback?error=oauth_failed`);
   }
 };

@@ -16,7 +16,7 @@ const OAuthCallback = () => {
     const oauthError = searchParams.get('error');
 
     if (oauthError) {
-      setError('Google sign-in failed. Please try again.');
+      setError('OAuth sign-in failed. Please try again.');
       setTimeout(() => navigate('/'), 3000);
       return;
     }
@@ -53,7 +53,7 @@ const OAuthCallback = () => {
         ) : (
           <div className="flex flex-col items-center gap-4">
             <Loader2 className="w-10 h-10 text-indigo-400 animate-spin" />
-            <p className="text-white text-lg">Signing you in with Google...</p>
+            <p className="text-white text-lg">Signing you in...</p>
           </div>
         )}
       </div>

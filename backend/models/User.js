@@ -26,12 +26,17 @@ const userSchema = new mongoose.Schema({
     unique: true,
     sparse: true // allows multiple null values
   },
+  githubId: {
+    type: String,
+    unique: true,
+    sparse: true // allows multiple null values
+  },
   avatar: {
     type: String
   },
   authProvider: {
     type: String,
-    enum: ['local', 'google'],
+    enum: ['local', 'google', 'github'],
     default: 'local'
   },
   college: {
