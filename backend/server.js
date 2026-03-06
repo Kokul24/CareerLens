@@ -1,7 +1,9 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import passport from 'passport';
 import connectDB from './config/database.js';
+import configurePassport from './config/passport.js';
 import careerRoutes from './routes/careerRoutes.js';
 import resumeRoutes from './routes/resumeRoutes.js';
 import authRoutes from './routes/authRoutes.js';
@@ -23,11 +25,15 @@ connectDB().catch(err => {
 
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Initialize Passport
+app.use(passport.initialize());
+configurePassport();
 
 // Routes
 app.use('/api/auth', authRoutes);

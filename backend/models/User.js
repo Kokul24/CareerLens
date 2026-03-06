@@ -18,23 +18,35 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: [true, 'Please provide a password'],
     minlength: [6, 'Password must be at least 6 characters'],
     select: false // Never return password in queries
   },
+  googleId: {
+    type: String,
+    unique: true,
+    sparse: true // allows multiple null values
+  },
+  avatar: {
+    type: String
+  },
+  authProvider: {
+    type: String,
+    enum: ['local', 'google'],
+    default: 'local'
+  },
   college: {
     type: String,
-    required: [true, 'Please provide your college name'],
-    trim: true
+    trim: true,
+    default: ''
   },
   degree: {
     type: String,
-    required: [true, 'Please provide your degree'],
-    trim: true
+    trim: true,
+    default: ''
   },
   graduationYear: {
     type: Number,
-    required: [true, 'Please provide your graduation year']
+    default: null
   },
   createdAt: {
     type: Date,
@@ -44,8 +56,8 @@ const userSchema = new mongoose.Schema({
 
 // Encrypt password before saving
 userSchema.pre('save', async function (next) {
-  // Only hash if password is modified
-  if (!this.isModified('password')) {
+  // Only hash if password exists and is modified
+  if (!this.password || !this.isModified('password')) {
     return next();
   }
 

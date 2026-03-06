@@ -129,7 +129,9 @@ export const getMe = async (req, res) => {
       user: {
         id: user._id,
         name: user.name,
-        email: user.email
+        email: user.email,
+        avatar: user.avatar || '',
+        authProvider: user.authProvider || 'local',
       }
     });
   } catch (error) {
@@ -148,4 +150,29 @@ export const logout = async (req, res) => {
     success: true,
     message: 'Logged out successfully'
   });
+};
+
+// @desc    Google OAuth callback
+// @route   GET /api/auth/google/callback
+// @access  Public
+export const googleCallback = async (req, res) => {
+  try {
+    const user = req.user;
+    const token = generateToken(user._id);
+
+    // Redirect to frontend with token and user info in query params
+    const frontendURL = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const userData = encodeURIComponent(JSON.stringify({
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      avatar: user.avatar || '',
+    }));
+
+    res.redirect(`${frontendURL}/oauth/callback?token=${token}&user=${userData}`);
+  } catch (error) {
+    console.error('Google callback error:', error);
+    const frontendURL = process.env.FRONTEND_URL || 'http://localhost:3000';
+    res.redirect(`${frontendURL}/?error=oauth_failed`);
+  }
 };

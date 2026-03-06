@@ -69,6 +69,14 @@ const authSlice = createSlice({
     clearSuccessMessage: (state) => {
       state.successMessage = null;
     },
+    setCredentials: (state, action) => {
+      state.user = action.payload.user;
+      state.token = action.payload.token;
+      state.isAuthenticated = true;
+      state.loading = false;
+      state.error = null;
+      state.successMessage = 'Login successful! Welcome to CareerLens.';
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -114,5 +122,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { clearError, clearSuccessMessage } = authSlice.actions;
+export const { clearError, clearSuccessMessage, setCredentials } = authSlice.actions;
 export default authSlice.reducer;

@@ -5,6 +5,7 @@ import { AnimatePresence } from 'framer-motion';
 
 import Login from './pages/Login';
 import Register from './pages/Register';
+import OAuthCallback from './pages/OAuthCallback';
 import Dashboard from './pages/Dashboard';
 import CareerNavigator from './pages/CareerNavigator';
 import ResumeScorer from './pages/ResumeScorer';
@@ -21,6 +22,7 @@ function App() {
             <Routes>
                 <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Login />} />
                 <Route path="/register" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Register />} />
+                <Route path="/oauth/callback" element={<OAuthCallback />} />
 
                 {/* Protected Routes */}
                 <Route path="/dashboard" element={
