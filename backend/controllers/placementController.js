@@ -13,19 +13,19 @@ const FEATURE_KEYS = [
   'hackathon_participation',
 ];
 
-// ─── Helper: convert qualitative skill level to numeric score ───
+// ─── Helper: convert qualitative skill level to numeric score (0–1 scale, matching training data) ───
 function skillLevelToScore(level) {
   const ranges = {
-    'Poor':      [10, 25],
-    'Fair':      [26, 45],
-    'Good':      [46, 65],
-    'Very Good': [66, 85],
-    'Excellent': [86, 100],
+    'Poor':      [0.10, 0.25],
+    'Fair':      [0.26, 0.45],
+    'Good':      [0.46, 0.65],
+    'Very Good': [0.66, 0.85],
+    'Excellent': [0.86, 1.00],
   };
   const range = ranges[level];
   if (!range) throw new Error(`Invalid skill level "${level}". Must be one of: Poor, Fair, Good, Very Good, Excellent`);
   const [min, max] = range;
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+  return parseFloat((Math.random() * (max - min) + min).toFixed(2));
 }
 
 // ─── Helper: extract & validate features ───
@@ -52,9 +52,9 @@ function extractFeatures(body) {
   // Specific validations
   if (![1, 2, 3, 4, 5, 6].includes(payload.branch)) throw new Error('Branch must be 1-6');
   if (payload.cgpa < 0 || payload.cgpa > 10) throw new Error('CGPA must be between 0 and 10');
-  if (payload.coding_skills_score < 0 || payload.coding_skills_score > 100) throw new Error('Coding skills score must be 0-100');
-  if (payload.communication_skills_score < 0 || payload.communication_skills_score > 100) throw new Error('Communication skills score must be 0-100');
-  if (payload.soft_skills_score < 0 || payload.soft_skills_score > 100) throw new Error('Soft skills score must be 0-100');
+  if (payload.coding_skills_score < 0 || payload.coding_skills_score > 1) throw new Error('Coding skills score must be between 0 and 1');
+  if (payload.communication_skills_score < 0 || payload.communication_skills_score > 1) throw new Error('Communication skills score must be between 0 and 1');
+  if (payload.soft_skills_score < 0 || payload.soft_skills_score > 1) throw new Error('Soft skills score must be between 0 and 1');
   if (![0, 1].includes(payload.hackathon_participation)) throw new Error('Hackathon participation must be 0 or 1');
   if (payload.internship_count < 0) throw new Error('Internship count cannot be negative');
   if (payload.project_count < 0) throw new Error('Project count cannot be negative');

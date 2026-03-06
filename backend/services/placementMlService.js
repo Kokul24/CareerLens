@@ -233,13 +233,13 @@ export async function predictPlacement(inputObj) {
 function generateSuggestions(input, contributions, probability) {
   const tips = [];
 
-  if (parseFloat(input.coding_skills_score) < 70) {
+  if (parseFloat(input.coding_skills_score) < 0.7) {
     tips.push('Increase your coding skills score by practicing on platforms like LeetCode, HackerRank, or CodeChef.');
   }
   if (parseInt(input.hackathon_participation) === 0) {
     tips.push('Participate in hackathons to demonstrate problem-solving skills and teamwork abilities.');
   }
-  if (parseFloat(input.communication_skills_score) < 70) {
+  if (parseFloat(input.communication_skills_score) < 0.7) {
     tips.push('Improve communication skills through public speaking, group discussions, or joining a debate club.');
   }
   if (parseInt(input.internship_count) < 2) {
@@ -254,7 +254,7 @@ function generateSuggestions(input, contributions, probability) {
   if (parseInt(input.project_count) < 3) {
     tips.push('Work on more projects to showcase your practical skills and initiative.');
   }
-  if (parseFloat(input.soft_skills_score) < 70) {
+  if (parseFloat(input.soft_skills_score) < 0.7) {
     tips.push('Develop soft skills like teamwork, leadership, and adaptability through group activities and volunteering.');
   }
 
