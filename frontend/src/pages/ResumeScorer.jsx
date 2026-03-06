@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
+import jsPDF from 'jspdf';
 import { useDropzone } from 'react-dropzone';
 import AnimatedBackground from '../components/AnimatedBackground';
 import Navbar from '../components/Navbar';
@@ -24,6 +25,7 @@ import {
   X,
   BarChart3,
   Zap,
+  Download,
 } from 'lucide-react';
 import ResumeAnalysisResult from '../components/ResumeAnalysisResult';
 
@@ -71,6 +73,257 @@ const ResumeScorer = () => {
     setTargetRole('');
     setJobDescription('');
     setUploadProgress(0);
+  };
+
+  const downloadPDF = () => {
+    if (!analysis) return;
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const W = pdf.internal.pageSize.getWidth();
+    const margin = 15;
+    let y = 15;
+
+    const drawLine = (yPos, color = [100, 116, 139]) => {
+      pdf.setDrawColor(...color);
+      pdf.setLineWidth(0.3);
+      pdf.line(margin, yPos, W - margin, yPos);
+    };
+
+    // Header
+    pdf.setFillColor(15, 23, 42);
+    pdf.rect(0, 0, W, 45, 'F');
+    pdf.setFillColor(6, 182, 212);
+    pdf.rect(0, 45, W, 1.5, 'F');
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(22);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('CareerLens', margin, 20);
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(148, 163, 184);
+    pdf.text('Resume Analyser — AI Scoring Report', margin, 28);
+    pdf.setFontSize(9);
+    pdf.text(`Generated: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`, margin, 36);
+
+    // Score badge
+    const score = analysis.overallScore || 0;
+    const badgeColor = score >= 70 ? [16, 185, 129] : score >= 40 ? [245, 158, 11] : [239, 68, 68];
+    const badgeBg = score >= 70 ? [6, 78, 59] : score >= 40 ? [120, 53, 15] : [127, 29, 29];
+    const badgeText = `Overall Score: ${score}/100`;
+    const badgeW = pdf.getTextWidth(badgeText) + 16;
+    pdf.setFillColor(...badgeBg);
+    pdf.roundedRect(W - margin - badgeW, 14, badgeW, 10, 2, 2, 'F');
+    pdf.setTextColor(...badgeColor);
+    pdf.setFontSize(11);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(badgeText, W - margin - badgeW + 8, 21);
+
+    y = 55;
+
+    if (targetRole) {
+      pdf.setTextColor(15, 23, 42);
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`Analysis for: ${targetRole}`, margin, y);
+      y += 10;
+      drawLine(y);
+      y += 8;
+    }
+
+    // Overall score
+    pdf.setTextColor(15, 23, 42);
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Overall Resume Score', margin, y);
+    y += 8;
+    pdf.setFontSize(28);
+    pdf.setTextColor(...badgeColor);
+    pdf.text(`${score}/100`, margin, y + 2);
+    y += 14;
+    drawLine(y);
+    y += 8;
+
+    // Score breakdown table
+    pdf.setTextColor(15, 23, 42);
+    pdf.setFontSize(13);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Score Breakdown', margin, y);
+    y += 7;
+    const cats = [
+      { key: 'atsCompatibility', label: 'ATS Compatibility' },
+      { key: 'contentQuality', label: 'Content Quality' },
+      { key: 'keywordOptimization', label: 'Keyword Optimization' },
+      { key: 'formatting', label: 'Formatting' },
+      { key: 'experienceRelevance', label: 'Experience Relevance' },
+    ];
+    const colW = (W - 2 * margin) / 2;
+    pdf.setFillColor(241, 245, 249);
+    pdf.rect(margin, y, W - 2 * margin, 9, 'F');
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(51, 65, 85);
+    pdf.text('Category', margin + 4, y + 6);
+    pdf.text('Score', margin + colW + 4, y + 6);
+    y += 9;
+    cats.forEach(({ key, label }, i) => {
+      const catScore = analysis[key]?.score ?? analysis.analysis?.[key]?.score ?? 0;
+      if (i % 2 === 0) {
+        pdf.setFillColor(248, 250, 252);
+        pdf.rect(margin, y, W - 2 * margin, 8, 'F');
+      }
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(9);
+      pdf.setTextColor(30, 41, 59);
+      pdf.text(label, margin + 4, y + 5.5);
+      const sc = catScore >= 70 ? [16, 185, 129] : catScore >= 40 ? [245, 158, 11] : [239, 68, 68];
+      pdf.setTextColor(...sc);
+      pdf.text(`${catScore}/100`, margin + colW + 4, y + 5.5);
+      const barX = margin + colW + 35;
+      const barMaxW = W - margin - barX - 5;
+      pdf.setFillColor(226, 232, 240);
+      pdf.roundedRect(barX, y + 2, barMaxW, 4, 1, 1, 'F');
+      pdf.setFillColor(...sc);
+      pdf.roundedRect(barX, y + 2, Math.max(1, (catScore / 100) * barMaxW), 4, 1, 1, 'F');
+      y += 8;
+    });
+    y += 6;
+    drawLine(y);
+    y += 8;
+
+    // Keywords
+    const matchedKws = analysis.keywordOptimization?.matchedKeywords ?? analysis.analysis?.keywordOptimization?.matchedKeywords ?? [];
+    const missingKws = analysis.keywordOptimization?.missingKeywords ?? analysis.analysis?.keywordOptimization?.missingKeywords ?? [];
+    if (matchedKws.length > 0) {
+      if (y + 10 > 270) { pdf.addPage(); y = 20; }
+      pdf.setTextColor(15, 23, 42);
+      pdf.setFontSize(13);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Matched Keywords', margin, y);
+      y += 7;
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(16, 185, 129);
+      const kwLines = pdf.splitTextToSize(matchedKws.join('  •  '), W - 2 * margin - 10);
+      pdf.text(kwLines, margin + 4, y);
+      y += kwLines.length * 5 + 6;
+    }
+    if (missingKws.length > 0) {
+      if (y + 10 > 270) { pdf.addPage(); y = 20; }
+      pdf.setTextColor(15, 23, 42);
+      pdf.setFontSize(13);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Missing Keywords', margin, y);
+      y += 7;
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(239, 68, 68);
+      const kwLines = pdf.splitTextToSize(missingKws.join('  •  '), W - 2 * margin - 10);
+      pdf.text(kwLines, margin + 4, y);
+      y += kwLines.length * 5 + 6;
+    }
+
+    // Strengths
+    const strengths = analysis.strengths || [];
+    if (strengths.length > 0) {
+      if (y + 10 > 270) { pdf.addPage(); y = 20; }
+      drawLine(y);
+      y += 8;
+      pdf.setTextColor(15, 23, 42);
+      pdf.setFontSize(13);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Strengths', margin, y);
+      y += 7;
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      strengths.forEach((s) => {
+        if (y > 270) { pdf.addPage(); y = 20; }
+        pdf.setFillColor(16, 185, 129);
+        pdf.circle(margin + 2.5, y - 1, 1.2, 'F');
+        pdf.setTextColor(51, 65, 85);
+        const lines = pdf.splitTextToSize(s, W - 2 * margin - 10);
+        pdf.text(lines, margin + 7, y);
+        y += lines.length * 4.5 + 3;
+      });
+      y += 3;
+    }
+
+    // Areas for Improvement
+    const areas = analysis.areasForImprovement || [];
+    if (areas.length > 0) {
+      if (y + 10 > 270) { pdf.addPage(); y = 20; }
+      drawLine(y);
+      y += 8;
+      pdf.setTextColor(15, 23, 42);
+      pdf.setFontSize(13);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Areas for Improvement', margin, y);
+      y += 7;
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      areas.forEach((a) => {
+        if (y > 270) { pdf.addPage(); y = 20; }
+        pdf.setFillColor(239, 68, 68);
+        pdf.circle(margin + 2.5, y - 1, 1.2, 'F');
+        pdf.setTextColor(51, 65, 85);
+        const lines = pdf.splitTextToSize(a, W - 2 * margin - 10);
+        pdf.text(lines, margin + 7, y);
+        y += lines.length * 4.5 + 3;
+      });
+      y += 3;
+    }
+
+    // Recommendations
+    const recs = analysis.recommendations || [];
+    if (recs.length > 0) {
+      if (y + 10 > 270) { pdf.addPage(); y = 20; }
+      drawLine(y);
+      y += 8;
+      pdf.setTextColor(15, 23, 42);
+      pdf.setFontSize(13);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Recommendations', margin, y);
+      y += 7;
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      recs.forEach((r) => {
+        if (y > 270) { pdf.addPage(); y = 20; }
+        pdf.setFillColor(99, 102, 241);
+        pdf.circle(margin + 2.5, y - 1, 1.2, 'F');
+        pdf.setTextColor(51, 65, 85);
+        const lines = pdf.splitTextToSize(r, W - 2 * margin - 10);
+        pdf.text(lines, margin + 7, y);
+        y += lines.length * 4.5 + 3;
+      });
+      y += 3;
+    }
+
+    // Industry Comparison
+    if (analysis.industryComparison) {
+      if (y + 10 > 270) { pdf.addPage(); y = 20; }
+      drawLine(y);
+      y += 8;
+      pdf.setTextColor(15, 23, 42);
+      pdf.setFontSize(13);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Industry Comparison', margin, y);
+      y += 7;
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(51, 65, 85);
+      const lines = pdf.splitTextToSize(String(analysis.industryComparison), W - 2 * margin - 5);
+      pdf.text(lines, margin, y);
+      y += lines.length * 4.5 + 6;
+    }
+
+    // Footer
+    if (y + 15 > 280) { pdf.addPage(); y = 20; }
+    drawLine(y, [203, 213, 225]);
+    y += 6;
+    pdf.setFontSize(8);
+    pdf.setTextColor(148, 163, 184);
+    pdf.text('CareerLens — Resume Analyser Module', margin, y);
+    pdf.text('This report was generated using AI-powered analysis. For informational purposes only.', margin, y + 4);
+    pdf.text(`Page 1 of ${pdf.getNumberOfPages()}`, W - margin - 24, y);
+    pdf.save(`resume-analysis-${new Date().toISOString().slice(0, 10)}.pdf`);
   };
 
   const scoreCategories = analysis
@@ -378,15 +631,26 @@ const ResumeScorer = () => {
                 {/* Reset */}
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-bold text-white">Analysis Results</h2>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={handleReset}
-                    className="btn-secondary text-sm px-4 py-2 flex items-center gap-2"
-                  >
-                    <X className="w-4 h-4" />
-                    New Analysis
-                  </motion.button>
+                  <div className="flex items-center gap-3">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={downloadPDF}
+                      className="text-sm px-4 py-2 flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 font-medium transition-all text-white"
+                    >
+                      <Download className="w-4 h-4" />
+                      Download Report
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleReset}
+                      className="btn-secondary text-sm px-4 py-2 flex items-center gap-2"
+                    >
+                      <X className="w-4 h-4" />
+                      New Analysis
+                    </motion.button>
+                  </div>
                 </div>
 
                 <ResumeAnalysisResult analysis={analysis} />

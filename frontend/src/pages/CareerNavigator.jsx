@@ -25,7 +25,9 @@ import {
   Sparkles,
   AlertCircle,
   X,
+  Download,
 } from 'lucide-react';
+import jsPDF from 'jspdf';
 import RoadmapResult from '../components/RoadmapResult';
 
 const CareerNavigator = () => {
@@ -43,6 +45,186 @@ const CareerNavigator = () => {
       .map((s) => s.trim())
       .filter(Boolean);
     dispatch(generateRoadmap({ targetRole, currentSkills: skills, experienceLevel }));
+  };
+
+  const downloadPDF = () => {
+    if (!roadmap) return;
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const W = pdf.internal.pageSize.getWidth();
+    const margin = 15;
+    let y = 15;
+
+    const drawLine = (yPos, color = [100, 116, 139]) => {
+      pdf.setDrawColor(...color);
+      pdf.setLineWidth(0.3);
+      pdf.line(margin, yPos, W - margin, yPos);
+    };
+
+    // Header
+    pdf.setFillColor(15, 23, 42);
+    pdf.rect(0, 0, W, 45, 'F');
+    pdf.setFillColor(99, 102, 241);
+    pdf.rect(0, 45, W, 1.5, 'F');
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(22);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('CareerLens', margin, 20);
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(148, 163, 184);
+    pdf.text('Career Navigator — AI Skill Roadmap Report', margin, 28);
+    pdf.setFontSize(9);
+    pdf.text(`Generated: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`, margin, 36);
+
+    // Experience badge
+    const badgeText = `${experienceLevel} Level`;
+    const badgeW = pdf.getTextWidth(badgeText) + 16;
+    pdf.setFillColor(49, 46, 129);
+    pdf.roundedRect(W - margin - badgeW, 14, badgeW, 10, 2, 2, 'F');
+    pdf.setTextColor(165, 180, 252);
+    pdf.setFontSize(11);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(badgeText, W - margin - badgeW + 8, 21);
+
+    y = 55;
+
+    const role = roadmap.targetRole || targetRole;
+    pdf.setTextColor(15, 23, 42);
+    pdf.setFontSize(15);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(`Career Roadmap: ${role}`, margin, y);
+    y += 8;
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(71, 85, 105);
+    pdf.text(`Experience Level: ${experienceLevel}`, margin, y);
+    y += 8;
+    drawLine(y);
+    y += 8;
+
+    // Critical Skills
+    const criticalSkills = roadmap.skillsToLearn?.filter((s) => s.priority === 'Critical') || [];
+    if (criticalSkills.length > 0) {
+      pdf.setTextColor(15, 23, 42);
+      pdf.setFontSize(13);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Critical Skills to Learn', margin, y);
+      y += 7;
+      const colW = (W - 2 * margin) / 3;
+      pdf.setFillColor(241, 245, 249);
+      pdf.rect(margin, y, W - 2 * margin, 9, 'F');
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(51, 65, 85);
+      pdf.text('Skill', margin + 4, y + 6);
+      pdf.text('Est. Time', margin + colW + 4, y + 6);
+      pdf.text('Market Demand', margin + colW * 2 + 4, y + 6);
+      y += 9;
+      criticalSkills.slice(0, 10).forEach((skill, i) => {
+        if (y > 270) { pdf.addPage(); y = 20; }
+        if (i % 2 === 0) {
+          pdf.setFillColor(248, 250, 252);
+          pdf.rect(margin, y, W - 2 * margin, 8, 'F');
+        }
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(9);
+        pdf.setTextColor(30, 41, 59);
+        pdf.text(String(skill.name || ''), margin + 4, y + 5.5);
+        pdf.setTextColor(71, 85, 105);
+        pdf.text(String(skill.estimatedTime || '2–3 weeks'), margin + colW + 4, y + 5.5);
+        pdf.setTextColor(99, 102, 241);
+        pdf.text(skill.marketDemand ? `${skill.marketDemand}/10` : 'High', margin + colW * 2 + 4, y + 5.5);
+        y += 8;
+      });
+      y += 6;
+    }
+
+    // Important Skills
+    const importantSkills = roadmap.skillsToLearn?.filter((s) => s.priority === 'Important') || [];
+    if (importantSkills.length > 0) {
+      if (y + 10 > 270) { pdf.addPage(); y = 20; }
+      drawLine(y);
+      y += 8;
+      pdf.setTextColor(15, 23, 42);
+      pdf.setFontSize(13);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Important Skills', margin, y);
+      y += 7;
+      const colW = (W - 2 * margin) / 2;
+      pdf.setFillColor(241, 245, 249);
+      pdf.rect(margin, y, W - 2 * margin, 9, 'F');
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(51, 65, 85);
+      pdf.text('Skill', margin + 4, y + 6);
+      pdf.text('Est. Time', margin + colW + 4, y + 6);
+      y += 9;
+      importantSkills.slice(0, 8).forEach((skill, i) => {
+        if (y > 270) { pdf.addPage(); y = 20; }
+        if (i % 2 === 0) {
+          pdf.setFillColor(248, 250, 252);
+          pdf.rect(margin, y, W - 2 * margin, 8, 'F');
+        }
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(9);
+        pdf.setTextColor(30, 41, 59);
+        pdf.text(String(skill.name || ''), margin + 4, y + 5.5);
+        pdf.setTextColor(245, 158, 11);
+        pdf.text(String(skill.estimatedTime || '1–2 weeks'), margin + colW + 4, y + 5.5);
+        y += 8;
+      });
+      y += 6;
+    }
+
+    // Current Skills Assessment
+    if (roadmap.currentSkillsAssessment?.length > 0) {
+      if (y + 10 > 270) { pdf.addPage(); y = 20; }
+      drawLine(y);
+      y += 8;
+      pdf.setTextColor(15, 23, 42);
+      pdf.setFontSize(13);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Current Skills Assessment', margin, y);
+      y += 7;
+      const colW = (W - 2 * margin) / 3;
+      pdf.setFillColor(241, 245, 249);
+      pdf.rect(margin, y, W - 2 * margin, 9, 'F');
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(51, 65, 85);
+      pdf.text('Skill', margin + 4, y + 6);
+      pdf.text('Your Level', margin + colW + 4, y + 6);
+      pdf.text('Market Demand', margin + colW * 2 + 4, y + 6);
+      y += 9;
+      roadmap.currentSkillsAssessment.slice(0, 8).forEach((skill, i) => {
+        if (y > 270) { pdf.addPage(); y = 20; }
+        if (i % 2 === 0) {
+          pdf.setFillColor(248, 250, 252);
+          pdf.rect(margin, y, W - 2 * margin, 8, 'F');
+        }
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(9);
+        pdf.setTextColor(30, 41, 59);
+        pdf.text(String(skill.name || ''), margin + 4, y + 5.5);
+        pdf.setTextColor(71, 85, 105);
+        pdf.text(skill.level != null ? `${skill.level}/10` : 'N/A', margin + colW + 4, y + 5.5);
+        pdf.setTextColor(99, 102, 241);
+        pdf.text(skill.marketDemand != null ? `${skill.marketDemand}/10` : 'N/A', margin + colW * 2 + 4, y + 5.5);
+        y += 8;
+      });
+      y += 6;
+    }
+
+    // Footer
+    if (y + 15 > 280) { pdf.addPage(); y = 20; }
+    drawLine(y, [203, 213, 225]);
+    y += 6;
+    pdf.setFontSize(8);
+    pdf.setTextColor(148, 163, 184);
+    pdf.text('CareerLens — Career Navigator Module', margin, y);
+    pdf.text('This report was generated using AI-powered analysis. For informational purposes only.', margin, y + 4);
+    pdf.text(`Page 1 of ${pdf.getNumberOfPages()}`, W - margin - 24, y);
+    pdf.save(`career-roadmap-${(role || 'report').replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().slice(0, 10)}.pdf`);
   };
 
   const handleReset = () => {
@@ -263,15 +445,26 @@ const CareerNavigator = () => {
                   <h2 className="text-xl font-bold text-white">
                     Roadmap for <span className="gradient-text">{roadmap.targetRole || targetRole}</span>
                   </h2>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={handleReset}
-                    className="btn-secondary text-sm px-4 py-2 flex items-center gap-2"
-                  >
-                    <X className="w-4 h-4" />
-                    New Search
-                  </motion.button>
+                  <div className="flex items-center gap-3">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={downloadPDF}
+                      className="text-sm px-4 py-2 flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 font-medium transition-all text-white"
+                    >
+                      <Download className="w-4 h-4" />
+                      Download Report
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleReset}
+                      className="btn-secondary text-sm px-4 py-2 flex items-center gap-2"
+                    >
+                      <X className="w-4 h-4" />
+                      New Search
+                    </motion.button>
+                  </div>
                 </div>
 
                 {/* Summary Cards, Radar Chart, Career Path, and Skills */}

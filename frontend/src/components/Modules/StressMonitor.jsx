@@ -323,6 +323,7 @@ export default function StressMonitor() {
     const chartEl = document.querySelector('#stress-report-container .recharts-wrapper');
     if (chartEl) {
       try {
+        if (y + 10 > 265) { pdf.addPage(); y = 20; }
         pdf.setTextColor(15, 23, 42);
         pdf.setFontSize(14);
         pdf.setFont('helvetica', 'bold');
@@ -331,7 +332,9 @@ export default function StressMonitor() {
         const chartCanvas = await html2canvas(chartEl, { backgroundColor: '#ffffff', scale: 2 });
         const chartImg = chartCanvas.toDataURL('image/png');
         const chartW = W - 2 * margin - 20;
-        const chartH = (chartCanvas.height * chartW) / chartCanvas.width;
+        let chartH = (chartCanvas.height * chartW) / chartCanvas.width;
+        if (chartH > 80) chartH = 80;
+        if (y + chartH > 275) { pdf.addPage(); y = 20; }
         pdf.addImage(chartImg, 'PNG', margin + 10, y, chartW, chartH);
         y += chartH + 8;
       } catch (e) {
