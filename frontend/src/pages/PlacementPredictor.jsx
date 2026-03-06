@@ -18,6 +18,14 @@ const BRANCH_MAP = {
   1: 'CSE', 2: 'Civil', 3: 'ECE', 4: 'EEE', 5: 'IT', 6: 'Mechanical',
 };
 
+const SKILL_LEVEL_OPTIONS = [
+  { value: 'Poor', label: 'Poor' },
+  { value: 'Fair', label: 'Fair' },
+  { value: 'Good', label: 'Good' },
+  { value: 'Very Good', label: 'Very Good' },
+  { value: 'Excellent', label: 'Excellent' },
+];
+
 const FEATURE_LABELS = {
   branch: 'Branch',
   cgpa: 'CGPA',
@@ -36,9 +44,9 @@ const FIELDS = [
   { key: 'internship_count', label: 'Internship Count', type: 'number', min: 0, max: 20, step: 1, placeholder: 'e.g. 2' },
   { key: 'project_count', label: 'Project Count', type: 'number', min: 0, max: 20, step: 1, placeholder: 'e.g. 3' },
   { key: 'certifications_count', label: 'Certifications Count', type: 'number', min: 0, max: 20, step: 1, placeholder: 'e.g. 2' },
-  { key: 'coding_skills_score', label: 'Coding Skills Score', type: 'number', min: 0, max: 100, step: 1, placeholder: '0-100' },
-  { key: 'communication_skills_score', label: 'Communication Skills Score', type: 'number', min: 0, max: 100, step: 1, placeholder: '0-100' },
-  { key: 'soft_skills_score', label: 'Soft Skills Score', type: 'number', min: 0, max: 100, step: 1, placeholder: '0-100' },
+  { key: 'coding_skill_level', label: 'Coding Skills', type: 'select', skillLevel: true, options: SKILL_LEVEL_OPTIONS },
+  { key: 'communication_skill_level', label: 'Communication Skills', type: 'select', skillLevel: true, options: SKILL_LEVEL_OPTIONS },
+  { key: 'soft_skill_level', label: 'Soft Skills', type: 'select', skillLevel: true, options: SKILL_LEVEL_OPTIONS },
   { key: 'hackathon_participation', label: 'Hackathon Participation', type: 'select', options: [{ value: '1', label: 'Yes' }, { value: '0', label: 'No' }] },
 ];
 
@@ -82,7 +90,7 @@ export default function PlacementPredictor() {
 
     const payload = {};
     for (const f of FIELDS) {
-      payload[f.key] = parseFloat(form[f.key]);
+      payload[f.key] = f.skillLevel ? form[f.key] : parseFloat(form[f.key]);
     }
 
     try {

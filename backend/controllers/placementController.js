@@ -13,11 +13,38 @@ const FEATURE_KEYS = [
   'hackathon_participation',
 ];
 
+// ─── Helper: convert qualitative skill level to numeric score ───
+function skillLevelToScore(level) {
+  const ranges = {
+    'Poor':      [10, 25],
+    'Fair':      [26, 45],
+    'Good':      [46, 65],
+    'Very Good': [66, 85],
+    'Excellent': [86, 100],
+  };
+  const range = ranges[level];
+  if (!range) throw new Error(`Invalid skill level "${level}". Must be one of: Poor, Fair, Good, Very Good, Excellent`);
+  const [min, max] = range;
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 // ─── Helper: extract & validate features ───
 function extractFeatures(body) {
+  // Convert qualitative skill levels to numeric scores when provided
+  const processedBody = { ...body };
+  if (processedBody.coding_skill_level !== undefined) {
+    processedBody.coding_skills_score = skillLevelToScore(processedBody.coding_skill_level);
+  }
+  if (processedBody.communication_skill_level !== undefined) {
+    processedBody.communication_skills_score = skillLevelToScore(processedBody.communication_skill_level);
+  }
+  if (processedBody.soft_skill_level !== undefined) {
+    processedBody.soft_skills_score = skillLevelToScore(processedBody.soft_skill_level);
+  }
+
   const payload = {};
   for (const k of FEATURE_KEYS) {
-    const val = parseFloat(body[k]);
+    const val = parseFloat(processedBody[k]);
     if (isNaN(val)) throw new Error(`Invalid or missing value for ${k}`);
     payload[k] = val;
   }
