@@ -12,7 +12,6 @@ import History from './pages/History';
 import ProtectedRoute from './components/ProtectedRoute';
 import StressMonitor from './components/Modules/StressMonitor';
 import PlacementPredictor from './pages/PlacementPredictor';
-import PlacementHistory from './pages/PlacementHistory';
 
 function App() {
     const { isAuthenticated } = useSelector((state) => state.auth);
@@ -54,12 +53,6 @@ function App() {
                         <PlacementPredictor />
                     </ProtectedRoute>
                 } />
-                <Route path="/placement-history" element={
-                    <ProtectedRoute>
-                        <PlacementHistory />
-                    </ProtectedRoute>
-                } />
-
                 {/* Fallback */}
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
