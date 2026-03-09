@@ -24,8 +24,21 @@ connectDB().catch(err => {
 });
 
 // Middleware
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'https://career-lens-n8ta.vercel.app',
+  'http://localhost:3000',
+].filter(Boolean).map(o => o.replace(/\/$/, ''));
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    // Allow server-to-server (no origin) and OPTIONS preflight
+    if (!origin || allowedOrigins.includes(origin.replace(/\/$/, ''))) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS: origin ${origin} not allowed`));
+    }
+  },
   credentials: true
 }));
 app.use(express.json());
@@ -61,8 +74,6 @@ const PORT = process.env.PORT || 5001;
 
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on http://localhost:${PORT}`);
-  if (process.env.STRESS_MODEL_WARMUP === 'true') {
-    setImmediate(() => warmupStressModel());
-  }
+  setImmediate(() => warmupStressModel());
   setImmediate(() => warmupPlacementModel());
 });
