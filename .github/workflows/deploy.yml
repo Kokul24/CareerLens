@@ -1,0 +1,43 @@
+name: Deploy Backend to AWS Elastic Beanstalk
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+
+jobs:
+  deploy:
+    name: Deploy to Elastic Beanstalk
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: backend
+        run: npm install --omit=dev
+
+      - name: Zip backend for deployment
+        run: |
+          cd backend
+          zip -r ../deploy.zip . -x "*.git*" -x "node_modules/.cache/*"
+
+      - name: Deploy to Elastic Beanstalk
+        uses: einaregilsson/beanstalk-deploy@v22
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: ${{ secrets.EB_APP_NAME }}
+          environment_name: ${{ secrets.EB_ENV_NAME }}
+          region: ${{ secrets.AWS_REGION }}
+          version_label: "careerlens-backend-${{ github.sha }}"
+          deployment_package: deploy.zip
+          wait_for_environment_recovery: 120
