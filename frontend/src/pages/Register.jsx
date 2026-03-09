@@ -298,7 +298,7 @@ const Register = () => {
                   whileTap={{ scale: 0.98 }}
                   className="py-2.5 px-4 rounded-lg bg-white/5 border border-white/10 hover:border-white/20 flex items-center justify-center gap-3 transition-colors"
                   type="button"
-                  onClick={() => window.location.href = 'http://localhost:5001/api/auth/google'}
+                  onClick={() => window.location.href = `${import.meta.env.VITE_API_URL || 'http://careerlens-backend-env.eba-pbatcqtw.ap-south-1.elasticbeanstalk.com'}/api/auth/google`}
                 >
                   <GoogleIcon />
                   <span className="text-sm font-medium text-slate-300">Google</span>
@@ -308,7 +308,7 @@ const Register = () => {
                   whileTap={{ scale: 0.98 }}
                   className="py-2.5 px-4 rounded-lg bg-white/5 border border-white/10 hover:border-white/20 flex items-center justify-center gap-3 transition-colors"
                   type="button"
-                  onClick={() => window.location.href = 'http://localhost:5001/api/auth/github'}
+                  onClick={() => window.location.href = `${import.meta.env.VITE_API_URL || 'http://careerlens-backend-env.eba-pbatcqtw.ap-south-1.elasticbeanstalk.com'}/api/auth/github`}
                 >
                   <Github className="w-5 h-5 text-white" />
                   <span className="text-sm font-medium text-slate-300">GitHub</span>
