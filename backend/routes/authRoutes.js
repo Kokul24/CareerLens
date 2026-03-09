@@ -6,7 +6,7 @@ import { protect } from '../middleware/auth.js';
 const router = express.Router();
 
 router.get('/oauth/failure', (req, res) => {
-  const frontendURL = process.env.FRONTEND_URL || 'http://localhost:3000';
+  const frontendURL = (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/$/, '');
   res.redirect(`${frontendURL}/oauth/callback?error=oauth_failed`);
 });
 

@@ -6,6 +6,10 @@ import { register, clearError } from '../redux/slices/authSlice';
 import { ParticleField, GlowOrbs } from '../components/AnimatedBackground';
 import { User, Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, Github } from 'lucide-react';
 
+const OAUTH_BACKEND_ORIGIN = (import.meta.env.VITE_API_URL || 'https://careerlens-backend-env.eba-pbatcqtw.ap-south-1.elasticbeanstalk.com')
+  .replace(/\/$/, '')
+  .replace(/\/api$/, '');
+
 const Register = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -298,7 +302,7 @@ const Register = () => {
                   whileTap={{ scale: 0.98 }}
                   className="py-2.5 px-4 rounded-lg bg-white/5 border border-white/10 hover:border-white/20 flex items-center justify-center gap-3 transition-colors"
                   type="button"
-                  onClick={() => window.location.href = `${import.meta.env.VITE_API_URL || 'http://careerlens-backend-env.eba-pbatcqtw.ap-south-1.elasticbeanstalk.com'}/api/auth/google`}
+                  onClick={() => window.location.href = `${OAUTH_BACKEND_ORIGIN}/api/auth/google`}
                 >
                   <GoogleIcon />
                   <span className="text-sm font-medium text-slate-300">Google</span>
@@ -308,7 +312,7 @@ const Register = () => {
                   whileTap={{ scale: 0.98 }}
                   className="py-2.5 px-4 rounded-lg bg-white/5 border border-white/10 hover:border-white/20 flex items-center justify-center gap-3 transition-colors"
                   type="button"
-                  onClick={() => window.location.href = `${import.meta.env.VITE_API_URL || 'http://careerlens-backend-env.eba-pbatcqtw.ap-south-1.elasticbeanstalk.com'}/api/auth/github`}
+                  onClick={() => window.location.href = `${OAUTH_BACKEND_ORIGIN}/api/auth/github`}
                 >
                   <Github className="w-5 h-5 text-white" />
                   <span className="text-sm font-medium text-slate-300">GitHub</span>
