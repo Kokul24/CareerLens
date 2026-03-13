@@ -3,6 +3,10 @@
     {
       "source": "/api/:path*",
       "destination": "http://careerlens-backend-env.eba-pbatcqtw.ap-south-1.elasticbeanstalk.com/api/:path*"
+    },
+    {
+      "source": "/:path*",
+      "destination": "/index.html"
     }
   ]
 }
