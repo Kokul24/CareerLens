@@ -34,8 +34,8 @@ const roadmapSchema = new mongoose.Schema({
     default: 0,
   },
   completedSkills: {
-    type: [Boolean],
-    default: [false, false, false, false, false, false],
+    type: [String],
+    default: [],
   },
   estimatedCompletionTime: String,
   salaryBoost: String,

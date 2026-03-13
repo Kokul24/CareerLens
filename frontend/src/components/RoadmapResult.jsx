@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
+import { updateRoadmap } from '../redux/slices/careerSlice';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
@@ -19,9 +21,23 @@ import {
     TrendingUp
 } from 'lucide-react';
 
-const RoadmapResult = ({ roadmap }) => {
+const RoadmapResult = ({ roadmap, isHistoryView = false }) => {
+    const dispatch = useDispatch();
     const [currentStep, setCurrentStep] = useState(1);
-    const [completedSkills, setCompletedSkills] = useState(new Set());
+    const [completedSkills, setCompletedSkills] = useState(new Set(
+        roadmap?.completedSkills?.filter(val => typeof val === 'string') || []
+    ));
+    const [isSaving, setIsSaving] = useState(false);
+    const [isSaved, setIsSaved] = useState(false);
+
+    // Keep local state in sync if the parent passes an updated roadmap log
+    useEffect(() => {
+        if (roadmap?.completedSkills) {
+            setCompletedSkills(new Set(
+                roadmap.completedSkills.filter(val => typeof val === 'string')
+            ));
+        }
+    }, [roadmap]);
 
     if (!roadmap) return null;
 
@@ -46,6 +62,27 @@ const RoadmapResult = ({ roadmap }) => {
     };
 
     const progress = page1Skills.length > 0 ? Math.round((completedSkills.size / page1Skills.length) * 100) : 0;
+
+    const handleSaveProgress = async () => {
+        if (!roadmap?._id) return;
+        setIsSaving(true);
+        setIsSaved(false);
+        try {
+            await dispatch(updateRoadmap({
+                id: roadmap._id,
+                data: {
+                    completedSkills: Array.from(completedSkills),
+                    overallProgress: progress
+                }
+            })).unwrap();
+            setIsSaved(true);
+            setTimeout(() => setIsSaved(false), 2000);
+        } catch (error) {
+            console.error('Failed to save progress:', error);
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     // Page 2 Data: Visualization with Fallback
     const rawRadarData = roadmap?.currentSkillsAssessment?.length > 0
@@ -132,8 +169,19 @@ const RoadmapResult = ({ roadmap }) => {
                                             <Target className="w-6 h-6 text-indigo-400" />
                                             Your Learning Path
                                         </h3>
-                                        <p className="text-slate-400 text-sm">Track your progress on top priority skills</p>
-                                    </div>
+                                        <p className="text-slate-400 text-sm">Track your progress on top priority skills</p>                                          {roadmap?._id && (
+                                              <button
+                                                  onClick={handleSaveProgress}
+                                                  disabled={isSaving || isSaved}
+                                                  className={`mt-3 px-4 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+                                                    isSaved 
+                                                      ? 'bg-green-500/20 border border-green-500/50 text-green-400' 
+                                                      : 'bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/50 text-indigo-300'
+                                                  }`}
+                                              >
+                                                  {isSaving ? 'Saving...' : isSaved ? 'Saved!' : 'Save Progress'}
+                                              </button>
+                                          )}                                    </div>
                                     <div className="text-right">
                                         <span className="text-3xl font-bold text-indigo-400">{progress}%</span>
                                         <span className="text-xs text-slate-500 block uppercase tracking-wider">Completed</span>

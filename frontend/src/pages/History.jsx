@@ -574,6 +574,15 @@ const History = () => {
     });
   };
 
+  useEffect(() => {
+    if (selectedItem?.type === 'roadmap' && roadmaps) {
+      const updatedData = roadmaps.find((r) => r._id === selectedItem.data._id);
+      if (updatedData && JSON.stringify(updatedData) !== JSON.stringify(selectedItem.data)) {
+        setSelectedItem((prev) => ({ ...prev, data: updatedData }));
+      }
+    }
+  }, [roadmaps, selectedItem]);
+
   const loading = tab === 'resumes'
     ? resumeLoading
     : tab === 'roadmaps'
@@ -1308,7 +1317,7 @@ const History = () => {
                     />
                   )
                 ) : (
-                  <RoadmapResult roadmap={selectedItem.data} />
+                  <RoadmapResult roadmap={selectedItem.data} isHistoryView={true} />
                 )}
               </div>
             </motion.div>

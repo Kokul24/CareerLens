@@ -9,6 +9,7 @@ import AnimatedBackground from '../components/AnimatedBackground';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { ScrollReveal, StaggerContainer, StaggerItem, SkeletonCard } from '../components/UIComponents';
+import { SearchableDropdown, SkillMultiSelect, TARGET_ROLES, SKILL_OPTIONS } from '../components/FormInputs';
 import { generateRoadmap, clearRoadmap } from '../redux/slices/careerSlice';
 import {
   Compass,
@@ -32,7 +33,7 @@ import RoadmapResult from '../components/RoadmapResult';
 
 const CareerNavigator = () => {
   const [targetRole, setTargetRole] = useState('');
-  const [currentSkills, setCurrentSkills] = useState('');
+  const [currentSkills, setCurrentSkills] = useState([]);
   const [experienceLevel, setExperienceLevel] = useState('Intermediate');
   const dispatch = useDispatch();
   const { roadmap, loading, error } = useSelector((state) => state.career);
@@ -40,11 +41,7 @@ const CareerNavigator = () => {
   const handleGenerate = (e) => {
     e.preventDefault();
     if (!targetRole.trim()) return;
-    const skills = currentSkills
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean);
-    dispatch(generateRoadmap({ targetRole, currentSkills: skills, experienceLevel }));
+    dispatch(generateRoadmap({ targetRole, currentSkills, experienceLevel }));
   };
 
   const downloadPDF = () => {
@@ -230,7 +227,7 @@ const CareerNavigator = () => {
   const handleReset = () => {
     dispatch(clearRoadmap());
     setTargetRole('');
-    setCurrentSkills('');
+    setCurrentSkills([]);
     setExperienceLevel('Intermediate');
   };
 
@@ -285,41 +282,37 @@ const CareerNavigator = () => {
                     transition={{ delay: 0.1 }}
                     className="glass-card p-6 sm:p-8"
                   >
-                    <form onSubmit={handleGenerate} className="space-y-5">
+                    <form onSubmit={handleGenerate} className="space-y-6">
                       <div>
                         <label className="block text-sm font-medium text-slate-300 mb-1.5">Target Role *</label>
-                        <input
-                          type="text"
+                        <SearchableDropdown
+                          options={TARGET_ROLES}
                           value={targetRole}
-                          onChange={(e) => setTargetRole(e.target.value)}
-                          className="input-glass"
-                          placeholder="e.g., Full Stack Developer, Data Scientist"
-                          required
+                          onChange={setTargetRole}
+                          placeholder="Select a target role"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1.5">Current Skills (comma-separated)</label>
-                        <input
-                          type="text"
+                        <label className="block text-sm font-medium text-slate-300 mb-1.5">Current Skills</label>
+                        <SkillMultiSelect
+                          availableSkills={SKILL_OPTIONS}
                           value={currentSkills}
-                          onChange={(e) => setCurrentSkills(e.target.value)}
-                          className="input-glass"
-                          placeholder="e.g., JavaScript, React, Python, SQL"
+                          onChange={setCurrentSkills}
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1.5">Experience Level</label>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">Experience Level</label>
                         <div className="flex gap-3">
                           {['Beginner', 'Intermediate', 'Advanced'].map((level) => (
                             <motion.button
                               key={level}
                               type="button"
                               whileHover={{ scale: 1.02 }}
-                              whileTap={{ scale: 0.98 }}
+                              whileTap={{ scale: 0.95 }}
                               onClick={() => setExperienceLevel(level)}
-                              className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all ${experienceLevel === level
-                                ? 'bg-indigo-500/20 border border-indigo-500/40 text-indigo-300'
-                                : 'bg-white/[0.04] border border-white/[0.08] text-slate-400 hover:text-white'
+                              className={`flex-1 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${experienceLevel === level
+                                ? 'bg-indigo-500/20 shadow-[0_0_15px_rgba(99,102,241,0.2)] border border-indigo-500/50 text-indigo-300'
+                                : 'bg-slate-800/40 border border-slate-700/50 text-slate-400 hover:text-white hover:bg-slate-800/80 hover:border-slate-600'
                                 }`}
                             >
                               {level}
@@ -327,7 +320,8 @@ const CareerNavigator = () => {
                           ))}
                         </div>
                       </div>
-                      <motion.button
+                      <div className="pt-2">
+                        <motion.button
                         whileHover={{ scale: 1.01 }}
                         whileTap={{ scale: 0.99 }}
                         type="submit"
@@ -346,6 +340,7 @@ const CareerNavigator = () => {
                           </>
                         )}
                       </motion.button>
+                    </div>
                     </form>
                   </motion.div>
 

@@ -7,6 +7,7 @@ import AnimatedBackground from '../components/AnimatedBackground';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { ScrollReveal, StaggerContainer, StaggerItem, CircularGauge, SkeletonCard } from '../components/UIComponents';
+import { SearchableDropdown, TARGET_ROLES } from '../components/FormInputs';
 import { analyzeResume, clearAnalysis } from '../redux/slices/resumeSlice';
 import {
   FileText,
@@ -430,13 +431,11 @@ const ResumeScorer = () => {
 
                       <div>
                         <label className="block text-sm font-medium text-slate-300 mb-1.5">Target Role *</label>
-                        <input
-                          type="text"
-                          value={targetRole}
-                          onChange={(e) => setTargetRole(e.target.value)}
-                          className="input-glass"
-                          placeholder="e.g., Full Stack Developer, Product Manager"
-                          required
+                          <SearchableDropdown
+                            options={TARGET_ROLES}
+                            value={targetRole}
+                            onChange={setTargetRole}
+                            placeholder="Select a target role"
                         />
                       </div>
 
