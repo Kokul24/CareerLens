@@ -2,7 +2,14 @@
 ## Intelligent Placement Prediction and Career Insight System
 
 CareerLens AI is an intelligent web platform designed to help students evaluate their placement readiness using data-driven insights. The system analyzes academic performance, technical skills, internships, and project experience to estimate placement probability and provide personalized career recommendations.
+---
 You can test out the application yourself by visiting our [Live Deployment](https://career-lens-n8ta.vercel.app/).
+---
+### Project Demo Video
+
+**[📺 Click here to watch the CareerLens AI Demo Video](https://youtu.be/Hem1KliMysU)**
+
+---
 
 The platform integrates:
 
